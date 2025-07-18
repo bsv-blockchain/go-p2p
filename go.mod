@@ -1,4 +1,4 @@
-module github.com/bsv-blockchain/go-template
+module github.com/bsv-blockchain/go-p2p
 
 go 1.24
 

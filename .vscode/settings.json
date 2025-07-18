@@ -13,7 +13,7 @@
 	},
 	"go.useLanguageServer": true,
 	"gopls": {
-		"formatting.local": "github.com/bsv-blockchain/go-template",
+		"formatting.local": "github.com/bsv-blockchain/go-p2p",
 		"formatting.gofumpt": true
 	},
 	"go.lintTool": "golangci-lint",

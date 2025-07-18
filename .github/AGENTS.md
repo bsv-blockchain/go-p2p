@@ -18,7 +18,7 @@ Additional `AGENTS.md` files **may exist in subdirectories** to provide more con
 
 ## 🔍 Project Overview
 
-**go-template** is a production-ready scaffold for building new Go libraries with zero setup friction.
+**go-p2p** is a production-ready scaffold for building new Go libraries with zero setup friction.
 It ships with opinionated defaults that reflect current best practices—clean project layout,
 module-aware dependency management, and Makefiles that automate everything from linting and race-condition
 testing to snapshot releases. Out of the box, GitHub Actions orchestrate CI/CD: unit tests (with `testify`),

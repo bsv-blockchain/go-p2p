@@ -22,7 +22,7 @@
 				"sections": [
 					"standard",
 					"default",
-					"prefix(github.com/bsv-blockchain/go-template)"
+					"prefix(github.com/bsv-blockchain/go-p2p)"
 				]
 			},
 			"gofmt": {
@@ -33,7 +33,7 @@
 			},
 			"goimports": {
 				"local-prefixes": [
-					"github.com/bsv-blockchain/go-template"
+					"github.com/bsv-blockchain/go-p2p"
 				]
 			}
 		}

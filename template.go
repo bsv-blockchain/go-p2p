@@ -18,7 +18,7 @@
 // - No external configuration is required for basic usage
 // - Designed for use as a starting point for new Go projects
 //
-// This package is part of the go-template project and is intended to be copied or forked for new Go library development.
+// This package is part of the go-p2p project and is intended to be copied or forked for new Go library development.
 package template
 
 import "fmt"
