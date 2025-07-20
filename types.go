@@ -2,16 +2,18 @@ package p2p
 
 import (
 	"context"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/sirupsen/logrus"
 	"sync"
 	"time"
+
+	"github.com/libp2p/go-libp2p/core/peer"
+
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/sirupsen/logrus"
 )
 
 const (
-	errorCreatingDhtMessage = "[Node] error creating DHT"
+	errorCreatingDhtMessage = "[Node] error creating DHT: %w"
 	multiAddrIPTemplate     = "/ip4/%s/tcp/%d"
 )
 

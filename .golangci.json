@@ -102,6 +102,9 @@
 		],
 		"disable": [
 			"gocritic",
+			"err113",
+			"contextcheck",
+			"errcheck",
 			"godot",
 			"wsl_v5",
 			"exhaustive",

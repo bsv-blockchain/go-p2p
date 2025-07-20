@@ -390,7 +390,7 @@ func TestP2PNode_PrivateNetwork(t *testing.T) {
 		pk, err := generatePrivateKey(ctx)
 		require.NoError(t, err)
 
-		host, err := setUpPrivateNetwork(config, pk)
+		host, err := setUpPrivateNetwork(logger, config, pk)
 		require.NoError(t, err)
 		require.NotNil(t, host)
 		defer host.Close()
@@ -412,7 +412,7 @@ func TestP2PNode_PrivateNetwork(t *testing.T) {
 		pk, err := generatePrivateKey(ctx)
 		require.NoError(t, err)
 
-		host, err := setUpPrivateNetwork(config, pk)
+		host, err := setUpPrivateNetwork(logger, config, pk)
 		require.NoError(t, err)
 		require.NotNil(t, host)
 		defer host.Close()
@@ -429,7 +429,7 @@ func TestP2PNode_PrivateNetwork(t *testing.T) {
 		pk, err := generatePrivateKey(ctx)
 		require.NoError(t, err)
 
-		host, err := setUpPrivateNetwork(config, pk)
+		host, err := setUpPrivateNetwork(logger, config, pk)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "error decoding shared key")
 		assert.Nil(t, host)

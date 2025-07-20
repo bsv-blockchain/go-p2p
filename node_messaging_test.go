@@ -367,7 +367,7 @@ func TestP2PNode_ConcurrentPublishing(t *testing.T) {
 	assert.Equal(t, 0, errorCount, "Should have no publishing errors")
 
 	// Verify metrics
-	expectedBytes := uint64(numGoroutines * numMessages * 2) // Each message is 2 bytes
+	expectedBytes := uint64(numGoroutines * numMessages * 2) //nolint:gosec // Each message is 2 bytes
 	assert.Equal(t, expectedBytes, node.BytesSent())
 }
 

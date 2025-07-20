@@ -2,9 +2,10 @@ package p2p
 
 import (
 	"context"
-	"github.com/libp2p/go-libp2p/core/network"
 	"testing"
 	"time"
+
+	"github.com/libp2p/go-libp2p/core/network"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sirupsen/logrus"
@@ -135,7 +136,8 @@ func TestNewP2PNode(t *testing.T) {
 				}
 
 				// Cleanup
-				node.host.Close()
+				err = node.host.Close()
+				require.NoError(t, err)
 			}
 		})
 	}
@@ -187,7 +189,8 @@ func TestP2PNode_StartStop(t *testing.T) {
 		require.NoError(t, err)
 
 		streamHandler := func(stream network.Stream) {
-			stream.Close()
+			err = stream.Close()
+			require.NoError(t, err)
 		}
 
 		err = node.Start(ctx, streamHandler, "test-topic")

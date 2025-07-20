@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
@@ -156,8 +158,9 @@ func TestBuildAdvertiseMultiAddrs(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		logger := logrus.New()
 		t.Run(tt.name, func(t *testing.T) {
-			result := buildAdvertiseMultiAddrs(tt.addrs, tt.defaultPort)
+			result := buildAdvertiseMultiAddrs(logger, tt.addrs, tt.defaultPort)
 			assert.Len(t, result, tt.expectedLen)
 
 			if tt.validateFunc != nil {

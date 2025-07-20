@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -14,8 +15,6 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-
-	"errors"
 
 	alertP2P "github.com/bitcoin-sv/alert-system/app/p2p"
 	"github.com/libp2p/go-libp2p"
@@ -73,7 +72,7 @@ func NewP2PNode(ctx context.Context, logger *logrus.Logger, config Config) (*Nod
 
 	// If a private DHT is configured, set up the private network
 	if config.UsePrivateDHT {
-		h, err = setUpPrivateNetwork(config, pk)
+		h, err = setUpPrivateNetwork(logger, config, pk)
 		if err != nil {
 			return nil, fmt.Errorf("[Node] error setting up private network: %w", err)
 		}
@@ -90,7 +89,7 @@ func NewP2PNode(ctx context.Context, logger *logrus.Logger, config Config) (*Nod
 		}
 
 		// If advertise addresses are specified, add them to the options
-		addrsToAdvertise := buildAdvertiseMultiAddrs(config.AdvertiseAddresses, config.Port)
+		addrsToAdvertise := buildAdvertiseMultiAddrs(logger, config.AdvertiseAddresses, config.Port)
 		if len(addrsToAdvertise) > 0 {
 			opts = append(opts, libp2p.AddrsFactory(func(_ []multiaddr.Multiaddr) []multiaddr.Multiaddr {
 				return addrsToAdvertise
@@ -203,7 +202,7 @@ func NewP2PNode(ctx context.Context, logger *logrus.Logger, config Config) (*Nod
 // Returns:
 //   - A configured libp2p host ready for private network operation
 //   - Error if the shared key is invalid or host creation fails
-func setUpPrivateNetwork(config Config, pk *crypto.PrivKey) (host.Host, error) {
+func setUpPrivateNetwork(logger *logrus.Logger, config Config, pk *crypto.PrivKey) (host.Host, error) {
 	var h host.Host
 
 	s := ""
@@ -230,7 +229,7 @@ func setUpPrivateNetwork(config Config, pk *crypto.PrivKey) (host.Host, error) {
 	}
 
 	// If advertise addresses are specified, add them to the options
-	addrsToAdvertise := buildAdvertiseMultiAddrs(config.AdvertiseAddresses, config.Port)
+	addrsToAdvertise := buildAdvertiseMultiAddrs(logger, config.AdvertiseAddresses, config.Port)
 	if len(addrsToAdvertise) > 0 {
 		opts = append(opts, libp2p.AddrsFactory(func(_ []multiaddr.Multiaddr) []multiaddr.Multiaddr {
 			return addrsToAdvertise
@@ -247,7 +246,7 @@ func setUpPrivateNetwork(config Config, pk *crypto.PrivKey) (host.Host, error) {
 
 // buildAdvertiseMultiAddrs constructs multiaddrs from host strings with optional ports.
 // Logs warnings via fmt.Printf for invalid addresses.
-func buildAdvertiseMultiAddrs(addrs []string, defaultPort int) []multiaddr.Multiaddr {
+func buildAdvertiseMultiAddrs(log *logrus.Logger, addrs []string, defaultPort int) []multiaddr.Multiaddr {
 	result := make([]multiaddr.Multiaddr, 0, len(addrs))
 
 	for _, addr := range addrs {
@@ -260,7 +259,7 @@ func buildAdvertiseMultiAddrs(addrs []string, defaultPort int) []multiaddr.Multi
 			var pi int
 			pi, err = strconv.Atoi(p)
 			if err != nil {
-				fmt.Printf("[Node] invalid port in advertise address: %s, error: %v\n", addr, err)
+				log.Debugf("invalid port in advertise address: %s, error: %v\n", addr, err)
 				continue
 			}
 			portNum = pi
@@ -277,7 +276,7 @@ func buildAdvertiseMultiAddrs(addrs []string, defaultPort int) []multiaddr.Multi
 		}
 
 		if err != nil {
-			fmt.Printf("[Node] invalid advertise address: %s, error: %v\n", addr, err)
+			log.Debugf("invalid advertise address: %s, error: %v\n", addr, err)
 			continue
 		}
 
@@ -508,7 +507,7 @@ func (s *Node) GetTopic(topicName string) *pubsub.Topic {
 // Publish sends a message to all subscribers of the specified topic.
 func (s *Node) Publish(ctx context.Context, topicName string, msgBytes []byte) error {
 	if len(s.topics) == 0 {
-		return fmt.Errorf("[Node][Publish] topics not initialised")
+		return fmt.Errorf("[Node][Publish] topics not initialized")
 	}
 
 	if _, ok := s.topics[topicName]; !ok {
@@ -516,7 +515,7 @@ func (s *Node) Publish(ctx context.Context, topicName string, msgBytes []byte) e
 	}
 
 	if err := s.topics[topicName].Publish(ctx, msgBytes); err != nil {
-		return fmt.Errorf("[Node][Publish] publish error", err)
+		return fmt.Errorf("[Node][Publish] publish error: %w", err)
 	}
 
 	s.logger.Debugf("[Node][Publish] topic: %s - message: %s\n", topicName, strings.TrimSpace(string(msgBytes)))
@@ -872,7 +871,7 @@ func (s *Node) initDHT(ctx context.Context, h host.Host) (*dht.IpfsDHT, error) {
 
 	kademliaDHT, err := dht.New(ctx, h, options...)
 	if err != nil {
-		return nil, fmt.Errorf(errorCreatingDhtMessage+": %w", err)
+		return nil, fmt.Errorf(errorCreatingDhtMessage, err)
 	} else if err = kademliaDHT.Bootstrap(ctx); err != nil {
 		return nil, fmt.Errorf("[Node] error bootstrapping DHT: %w", err)
 	}
@@ -1015,7 +1014,7 @@ func (s *Node) initPrivateDHT(ctx context.Context, host host.Host) (*dht.IpfsDHT
 
 	kademliaDHT, err := dht.New(ctx, host, options...)
 	if err != nil {
-		return nil, fmt.Errorf(errorCreatingDhtMessage+": %w", err)
+		return nil, fmt.Errorf(errorCreatingDhtMessage, err)
 	}
 
 	err = kademliaDHT.Bootstrap(ctx)
