@@ -176,13 +176,6 @@ export class P2PNode {
       }
     });
 
-    // Add pubsub event listeners
-    this.node.services.pubsub.addEventListener('gossipsub:heartbeat', () => {
-      if (this.node) {
-        this.logger.debug('GossipSub heartbeat - Connected peers:', this.node.getPeers().length);
-      }
-    });
-
     // Subscribe to the topic
     for (const topic of this.topics) {
       this.logger.info(`Subscribing to topic: ${topic}`);

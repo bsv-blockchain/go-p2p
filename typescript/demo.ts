@@ -10,7 +10,7 @@ async function main() {
 
   // Configuration from teranode-p2p-poc/config.yaml
   const options = {
-    listenAddresses: ['/ip4/127.0.0.1/tcp/9902'],
+    listenAddresses: ['/ip4/127.0.0.1/tcp/9901'],
     bootstrapPeers: ['/dns4/teranode-bootstrap.bsvb.tech/tcp/9901/p2p/12D3KooWESmhNAN8s6NPdGNvJH3zJ4wMKDxapXKNUe2DzkAwKYqK'],
     usePrivateDHT: true,
     sharedKey: '285b49e6d910726a70f205086c39cbac6d8dcc47839053a21b1f614773bbc137',
