@@ -9,10 +9,13 @@ import { identify } from '@libp2p/identify';
 import { kadDHT } from '@libp2p/kad-dht';
 import { ping } from '@libp2p/ping';
 import { preSharedKey } from '@libp2p/pnet';
+import { multiaddr } from '@multiformats/multiaddr';
+import { peerIdFromString } from '@libp2p/peer-id';
 
 export interface P2PNodeOptions {
   listenAddresses?: string[];
   bootstrapPeers?: string[];
+  staticPeers?: string[];
   usePrivateDHT?: boolean;
   sharedKey?: string;
   dhtProtocolID?: string;
@@ -30,6 +33,8 @@ export class P2PNode {
     'bitcoin/mainnet-rejected_tx',
     ];
   private messageHandler: (message: Uint8Array) => void;
+  private staticPeers: string[] = [];
+  private reconnectionInterval: NodeJS.Timeout | null = null;
 
   private constructor(messageHandler: (message: Uint8Array) => void, options: P2PNodeOptions = {}) {
     this.messageHandler = messageHandler;
@@ -217,9 +222,118 @@ export class P2PNode {
       gossipLogger.info('Received message from topic:', msg.topic);
       this.messageHandler(msg.data);
     });
+
+    // Connect to static peers if configured
+    if (options.staticPeers && options.staticPeers.length > 0) {
+      this.staticPeers = [...options.staticPeers]; // Store for reconnection
+      this.logger.info(`Connecting to ${options.staticPeers.length} static peers...`);
+      await this.connectToStaticPeers(options.staticPeers);
+      
+      // Start periodic reconnection monitoring
+      this.startStaticPeerMonitoring();
+    }
+  }
+
+  private async connectToStaticPeers(staticPeers: string[]) {
+    if (!this.node) {
+      this.logger.warn('Cannot connect to static peers: node not initialized');
+      return;
+    }
+
+    const connectionPromises = staticPeers.map(async (peerAddr) => {
+      try {
+        this.logger.info(`Attempting to connect to static peer: ${peerAddr}`);
+        await this.node!.dial(multiaddr(peerAddr));
+        this.logger.info(`✅ Successfully connected to static peer: ${peerAddr}`);
+      } catch (error) {
+        this.logger.warn(`❌ Failed to connect to static peer ${peerAddr}:`, error);
+      }
+    });
+
+    // Wait for all connection attempts to complete (with individual error handling)
+    await Promise.allSettled(connectionPromises);
+    
+    const connectedPeers = this.node.getPeers().length;
+    this.logger.info(`Static peer connection complete. Total connected peers: ${connectedPeers}`);
+  }
+
+  private startStaticPeerMonitoring() {
+    // Check static peer connections every 30 seconds
+    this.reconnectionInterval = setInterval(async () => {
+      if (!this.node || this.staticPeers.length === 0) {
+        return;
+      }
+
+      const connectedPeerIds = this.node.getPeers().map(p => p.toString());
+      const disconnectedStaticPeers: string[] = [];
+
+      // Check which static peers are disconnected
+      for (const staticPeer of this.staticPeers) {
+        try {
+          // Extract peer ID from multiaddr
+          const peerIdMatch = staticPeer.match(/\/p2p\/([^/]+)$/);
+          if (peerIdMatch) {
+            const peerId = peerIdMatch[1];
+            if (!connectedPeerIds.includes(peerId)) {
+              disconnectedStaticPeers.push(staticPeer);
+            }
+          }
+        } catch (error) {
+          this.logger.warn(`Error checking static peer ${staticPeer}:`, error);
+        }
+      }
+
+      // Reconnect to disconnected static peers
+      if (disconnectedStaticPeers.length > 0) {
+        this.logger.info(`Reconnecting to ${disconnectedStaticPeers.length} disconnected static peers...`);
+        await this.connectToStaticPeers(disconnectedStaticPeers);
+      }
+    }, 30000); // 30 seconds
+  }
+
+  async discoverPeerById(peerId: string): Promise<string | null> {
+    if (!this.node) {
+      return null;
+    }
+
+    try {
+      this.logger.info(`Searching for peer ${peerId} in DHT...`);
+      const peerIdObj = peerIdFromString(peerId);
+      const peerInfo = await this.node.peerStore.get(peerIdObj);
+      
+      if (peerInfo && peerInfo.addresses.length > 0) {
+        const multiaddr = peerInfo.addresses[0].multiaddr.toString();
+        this.logger.info(`Found peer ${peerId} at address: ${multiaddr}`);
+        return multiaddr;
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to find peer ${peerId}:`, error);
+    }
+    
+    return null;
+  }
+
+  async connectToPeerById(peerId: string) {
+    const address = await this.discoverPeerById(peerId);
+    if (address) {
+      try {
+        await this.node!.dial(multiaddr(address));
+        this.logger.info(`✅ Successfully connected to peer by ID: ${peerId}`);
+      } catch (error) {
+        this.logger.warn(`❌ Failed to connect to peer ${peerId}:`, error);
+      }
+    } else {
+      this.logger.warn(`Could not discover address for peer ${peerId}`);
+    }
   }
 
   async stop() {
+    // Clear static peer monitoring
+    if (this.reconnectionInterval) {
+      clearInterval(this.reconnectionInterval);
+      this.reconnectionInterval = null;
+    }
+    
     if (this.node) {
       await this.node.stop();
     }
