@@ -272,6 +272,12 @@ func buildAdvertiseMultiAddrs(log *logrus.Logger, addrs []string, defaultPort in
 		if net.ParseIP(hostStr) != nil {
 			maddr, err = multiaddr.NewMultiaddr(fmt.Sprintf(multiAddrIPTemplate, hostStr, portNum))
 		} else {
+			// If the host is not an IP address, assume it's a DNS name
+			// Validate that the host is a valid DNS name
+			if strings.Contains(hostStr, ":") {
+				log.Debugf("invalid DNS name in advertise address: %s, error: %v\n", addr, err)
+				continue
+			}
 			maddr, err = multiaddr.NewMultiaddr(fmt.Sprintf("/dns4/%s/tcp/%d", hostStr, portNum))
 		}
 
@@ -460,6 +466,9 @@ func (s *Node) SetTopicHandler(ctx context.Context, topicName string, handler Ha
 
 	topic := s.topics[topicName]
 
+	if topic == nil {
+		return fmt.Errorf("[Node][SetTopicHandler] topic not found: %s", topicName)
+	}
 	sub, err := topic.Subscribe()
 	if err != nil {
 		return err
@@ -620,7 +629,13 @@ func (s *Node) connectToStaticPeers(ctx context.Context, staticPeers []string) b
 		default:
 		}
 
-		peerInfo, err := peer.AddrInfoFromP2pAddr(multiaddr.StringCast(peerAddr))
+		// check if peerAddr is valid
+		peerMaddr, err := multiaddr.NewMultiaddr(peerAddr)
+		if err != nil {
+			s.logger.Errorf("[Node] invalid static peer address: %s", peerAddr)
+			continue
+		}
+		peerInfo, err := peer.AddrInfoFromP2pAddr(peerMaddr)
 		if err != nil {
 			s.logger.Errorf("[Node] failed to get peerInfo from  %s: %v", peerAddr, err)
 			continue
@@ -956,6 +971,14 @@ func (s *Node) initPrivateDHT(ctx context.Context, host host.Host) (*dht.IpfsDHT
 		return nil, fmt.Errorf("[Node] bootstrapAddresses not set in config")
 	}
 
+	// Ensure the DHT protocol ID is set in the config
+	dhtProtocolIDStr := s.config.DHTProtocolID
+	if dhtProtocolIDStr == "" {
+		return nil, errors.New("[Node] error getting p2p_dht_protocol_id")
+	}
+
+	dhtProtocolID := protocol.ID(dhtProtocolIDStr)
+
 	// Track if we successfully connected to at least one bootstrap address
 	connectedToBootstrap := false
 
@@ -1000,13 +1023,6 @@ func (s *Node) initPrivateDHT(ctx context.Context, host host.Host) (*dht.IpfsDHT
 	if !connectedToBootstrap {
 		return nil, fmt.Errorf("[Node] failed to connect to any bootstrap addresses")
 	}
-
-	dhtProtocolIDStr := s.config.DHTProtocolID
-	if dhtProtocolIDStr == "" {
-		return nil, errors.New("[Node] error getting p2p_dht_protocol_id")
-	}
-
-	dhtProtocolID := protocol.ID(dhtProtocolIDStr)
 
 	var options []dht.Option
 	options = append(options, dht.ProtocolPrefix(dhtProtocolID))

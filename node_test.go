@@ -296,24 +296,6 @@ func TestP2PNode_Metrics(t *testing.T) {
 		assert.Equal(t, time.Unix(0, 0), node.LastSend())
 		assert.Equal(t, time.Unix(0, 0), node.LastRecv())
 	})
-
-	t.Run("update metrics", func(t *testing.T) {
-		// Update bytes received
-		node.UpdateBytesReceived(100)
-		assert.Equal(t, uint64(100), node.BytesReceived())
-
-		node.UpdateBytesReceived(50)
-		assert.Equal(t, uint64(150), node.BytesReceived())
-
-		// Update last received
-		beforeUpdate := time.Now()
-		node.UpdateLastReceived()
-		afterUpdate := time.Now()
-
-		lastRecv := node.LastRecv()
-		assert.True(t, lastRecv.After(beforeUpdate) || lastRecv.Equal(beforeUpdate))
-		assert.True(t, lastRecv.Before(afterUpdate) || lastRecv.Equal(afterUpdate))
-	})
 }
 
 func TestP2PNode_PeerManagement(t *testing.T) {

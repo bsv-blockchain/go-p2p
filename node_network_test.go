@@ -26,9 +26,10 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 
 	// Create first node
 	config1 := Config{
-		ProcessName:     "node1",
-		ListenAddresses: []string{"127.0.0.1"},
-		Port:            0, // Random port
+		ProcessName:        "node1",
+		ListenAddresses:    []string{"127.0.0.1"},
+		AdvertiseAddresses: []string{"127.0.1"},
+		Port:               3111, // Random port
 	}
 
 	node1, err := NewP2PNode(ctx, logger, config1)
@@ -40,10 +41,11 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 
 	// Create second node with static peer
 	config2 := Config{
-		ProcessName:     "node2",
-		ListenAddresses: []string{"127.0.0.1"},
-		Port:            0,
-		StaticPeers:     []string{node1Addr},
+		ProcessName:        "node2",
+		ListenAddresses:    []string{"127.0.0.1"},
+		AdvertiseAddresses: []string{"127.0.1"},
+		Port:               3112,
+		StaticPeers:        []string{node1Addr},
 	}
 
 	node2, err := NewP2PNode(ctx, logger, config2)
@@ -292,9 +294,10 @@ func TestP2PNode_AttemptConnection(t *testing.T) {
 
 	// Create two nodes
 	config1 := Config{
-		ProcessName:     "node1",
-		ListenAddresses: []string{"127.0.0.1"},
-		Port:            0,
+		ProcessName:        "node1",
+		ListenAddresses:    []string{"127.0.0.1"},
+		AdvertiseAddresses: []string{"127.0.0.1"},
+		Port:               3111,
 	}
 
 	node1, err := NewP2PNode(ctx, logger, config1)
@@ -302,9 +305,10 @@ func TestP2PNode_AttemptConnection(t *testing.T) {
 	defer node1.host.Close()
 
 	config2 := Config{
-		ProcessName:     "node2",
-		ListenAddresses: []string{"127.0.0.1"},
-		Port:            0,
+		ProcessName:        "node2",
+		ListenAddresses:    []string{"127.0.0.1"},
+		AdvertiseAddresses: []string{"127.0.1"},
+		Port:               3112,
 	}
 
 	node2, err := NewP2PNode(ctx, logger, config2)

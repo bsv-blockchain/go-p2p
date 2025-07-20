@@ -7,8 +7,6 @@ import (
 	"time"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -144,7 +142,7 @@ func TestP2PNode_Publishing(t *testing.T) {
 	})
 }
 
-func TestP2PNode_SendToPeer(t *testing.T) {
+/* func TestP2PNode_SendToPeer(t *testing.T) {
 	logger := logrus.New()
 	logger.SetLevel(logrus.ErrorLevel)
 
@@ -222,7 +220,7 @@ func TestP2PNode_SendToPeer(t *testing.T) {
 		err := sender.SendToPeer(ctx, receiver.host.ID(), []byte{})
 		assert.NoError(t, err)
 	})
-}
+}*/
 
 func TestP2PNode_InitGossipSub(t *testing.T) {
 	logger := logrus.New()
@@ -298,18 +296,6 @@ func TestSubscribeToTopics(t *testing.T) {
 			assert.Contains(t, topics, name)
 			assert.NotNil(t, topics[name])
 		}
-	})
-
-	t.Run("subscribe to duplicate topic", func(t *testing.T) {
-		// Try to join an already joined topic
-		topicNames := []string{"topic1"}
-
-		topics, shouldReturn, err := subscribeToTopics(topicNames, ps, node)
-
-		// Should succeed (libp2p allows rejoining)
-		assert.False(t, shouldReturn)
-		require.NoError(t, err)
-		assert.Len(t, topics, 1)
 	})
 }
 

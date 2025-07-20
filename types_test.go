@@ -216,6 +216,6 @@ func TestHandler_FunctionType(t *testing.T) {
 
 func TestConstants(t *testing.T) {
 	// Verify constants are defined correctly
-	assert.Equal(t, "[Node] error creating DHT", errorCreatingDhtMessage)
+	assert.Equal(t, "[Node] error creating DHT: %w", errorCreatingDhtMessage)
 	assert.Equal(t, "/ip4/%s/tcp/%d", multiAddrIPTemplate)
 }
