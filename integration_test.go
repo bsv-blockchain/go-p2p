@@ -26,7 +26,7 @@ func TestIntegration_TwoNodeCommunication(t *testing.T) {
 	defer cancel()
 
 	// Create two nodes
-	config1 := P2PConfig{
+	config1 := Config{
 		ProcessName:     "node1",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -36,7 +36,7 @@ func TestIntegration_TwoNodeCommunication(t *testing.T) {
 	require.NoError(t, err)
 	defer node1.Stop(ctx)
 
-	config2 := P2PConfig{
+	config2 := Config{
 		ProcessName:     "node2",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -49,7 +49,7 @@ func TestIntegration_TwoNodeCommunication(t *testing.T) {
 
 	// Start both nodes with same topics
 	topics := []string{"blocks", "transactions"}
-	
+
 	err = node1.Start(ctx, nil, topics...)
 	require.NoError(t, err)
 
@@ -63,13 +63,13 @@ func TestIntegration_TwoNodeCommunication(t *testing.T) {
 
 	t.Run("pubsub messaging", func(t *testing.T) {
 		received := make(chan string, 1)
-		
+
 		// Set up handler on node1
-		handler := func(ctx context.Context, msg []byte, from string) {
+		handler := func(_ context.Context, msg []byte, _ string) {
 			received <- string(msg)
 		}
-		
-		err := node1.SetTopicHandler(ctx, "blocks", handler)
+
+		err = node1.SetTopicHandler(ctx, "blocks", handler)
 		require.NoError(t, err)
 
 		// Give subscription time to propagate
@@ -91,18 +91,19 @@ func TestIntegration_TwoNodeCommunication(t *testing.T) {
 
 	t.Run("direct messaging", func(t *testing.T) {
 		received := make(chan []byte, 1)
-		
+
 		// Set up stream handler on node1
 		streamHandler := func(stream network.Stream) {
 			defer stream.Close()
-			
+
 			buf := make([]byte, 1024)
-			n, err := stream.Read(buf)
+			var n int
+			n, err = stream.Read(buf)
 			if err == nil {
 				received <- buf[:n]
 			}
 		}
-		
+
 		node1.host.SetStreamHandler("/test/1.0.0", streamHandler)
 
 		// Send from node2
@@ -135,7 +136,7 @@ func TestIntegration_TwoNodeCommunication(t *testing.T) {
 
 		// Update and check peer height
 		node1.UpdatePeerHeight(node2.host.ID(), 12345)
-		
+
 		peers := node1.CurrentlyConnectedPeers()
 		found := false
 		for _, p := range peers {
@@ -161,11 +162,11 @@ func TestIntegration_MultiNodeNetwork(t *testing.T) {
 	defer cancel()
 
 	numNodes := 5
-	nodes := make([]*P2PNode, numNodes)
+	nodes := make([]*Node, numNodes)
 
 	// Create nodes
 	for i := 0; i < numNodes; i++ {
-		config := P2PConfig{
+		config := Config{
 			ProcessName:     fmt.Sprintf("node%d", i),
 			ListenAddresses: []string{"127.0.0.1"},
 			Port:            0,
@@ -181,10 +182,10 @@ func TestIntegration_MultiNodeNetwork(t *testing.T) {
 
 		node, err := NewP2PNode(ctx, logger, config)
 		require.NoError(t, err)
-		
+
 		err = node.Start(ctx, nil, "broadcast")
 		require.NoError(t, err)
-		
+
 		nodes[i] = node
 		defer node.Stop(ctx)
 	}
@@ -208,12 +209,12 @@ func TestIntegration_MultiNodeNetwork(t *testing.T) {
 		for i, node := range nodes {
 			nodeID := i
 			wg.Add(1)
-			
-			handler := func(ctx context.Context, msg []byte, from string) {
+
+			handler := func(_ context.Context, msg []byte, _ string) {
 				receivedCount.Store(nodeID, string(msg))
 				wg.Done()
 			}
-			
+
 			err := node.SetTopicHandler(ctx, "broadcast", handler)
 			require.NoError(t, err)
 		}
@@ -242,7 +243,7 @@ func TestIntegration_MultiNodeNetwork(t *testing.T) {
 
 		// Count how many nodes received the message
 		count := 0
-		receivedCount.Range(func(key, value interface{}) bool {
+		receivedCount.Range(func(_, value interface{}) bool {
 			if value.(string) == testMsg {
 				count++
 			}
@@ -267,7 +268,7 @@ func TestIntegration_ConnectionCallbacks(t *testing.T) {
 	defer cancel()
 
 	// Create first node
-	config1 := P2PConfig{
+	config1 := Config{
 		ProcessName:     "callback-node1",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -280,8 +281,8 @@ func TestIntegration_ConnectionCallbacks(t *testing.T) {
 	// Set up connection callback
 	connectedPeers := &sync.Map{}
 	connectionTimes := &sync.Map{}
-	
-	node1.SetPeerConnectedCallback(func(ctx context.Context, peerID peer.ID) {
+
+	node1.SetPeerConnectedCallback(func(_ context.Context, peerID peer.ID) {
 		connectedPeers.Store(peerID.String(), true)
 		connectionTimes.Store(peerID.String(), time.Now())
 	})
@@ -290,7 +291,7 @@ func TestIntegration_ConnectionCallbacks(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create and connect second node
-	config2 := P2PConfig{
+	config2 := Config{
 		ProcessName:     "callback-node2",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -339,7 +340,7 @@ func TestIntegration_PrivateNetwork(t *testing.T) {
 	sharedKey := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 	// Create first private node
-	config1 := P2PConfig{
+	config1 := Config{
 		ProcessName:     "private1",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -355,7 +356,7 @@ func TestIntegration_PrivateNetwork(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create second private node with same key
-	config2 := P2PConfig{
+	config2 := Config{
 		ProcessName:     "private2",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -378,11 +379,11 @@ func TestIntegration_PrivateNetwork(t *testing.T) {
 
 	t.Run("private network messaging", func(t *testing.T) {
 		received := make(chan string, 1)
-		
-		handler := func(ctx context.Context, msg []byte, from string) {
+
+		handler := func(_ context.Context, msg []byte, _ string) {
 			received <- string(msg)
 		}
-		
+
 		err := node1.SetTopicHandler(ctx, "private-topic", handler)
 		require.NoError(t, err)
 
@@ -402,7 +403,7 @@ func TestIntegration_PrivateNetwork(t *testing.T) {
 
 	t.Run("node with wrong key cannot connect", func(t *testing.T) {
 		// Create node with different shared key
-		config3 := P2PConfig{
+		config3 := Config{
 			ProcessName:     "wrong-key",
 			ListenAddresses: []string{"127.0.0.1"},
 			Port:            0,
@@ -436,7 +437,7 @@ func TestIntegration_MetricsTracking(t *testing.T) {
 	defer cancel()
 
 	// Create two connected nodes
-	config1 := P2PConfig{
+	config1 := Config{
 		ProcessName:     "metrics1",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -446,7 +447,7 @@ func TestIntegration_MetricsTracking(t *testing.T) {
 	require.NoError(t, err)
 	defer node1.Stop(ctx)
 
-	config2 := P2PConfig{
+	config2 := Config{
 		ProcessName:     "metrics2",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -469,10 +470,10 @@ func TestIntegration_MetricsTracking(t *testing.T) {
 	t.Run("track bytes sent and received", func(t *testing.T) {
 		// Set up handler to track received bytes
 		received := make(chan []byte, 10)
-		handler := func(ctx context.Context, msg []byte, from string) {
+		handler := func(_ context.Context, msg []byte, _ string) {
 			received <- msg
 		}
-		
+
 		err := node1.SetTopicHandler(ctx, "metrics-topic", handler)
 		require.NoError(t, err)
 
@@ -486,7 +487,7 @@ func TestIntegration_MetricsTracking(t *testing.T) {
 		}
 
 		initialBytesSent := node2.BytesSent()
-		
+
 		for _, msg := range messages {
 			err := node2.Publish(ctx, "metrics-topic", []byte(msg))
 			require.NoError(t, err)
@@ -514,7 +515,7 @@ func TestIntegration_MetricsTracking(t *testing.T) {
 
 	t.Run("track direct message metrics", func(t *testing.T) {
 		initialBytes := node2.BytesSent()
-		
+
 		msg := []byte("direct metric test message")
 		err := node2.SendToPeer(ctx, node1.host.ID(), msg)
 		require.NoError(t, err)

@@ -11,23 +11,23 @@ import (
 )
 
 const (
-	errorCreatingDhtMessage = "[P2PNode] error creating DHT"
+	errorCreatingDhtMessage = "[Node] error creating DHT"
 	multiAddrIPTemplate     = "/ip4/%s/tcp/%d"
 )
 
-// P2PNode implements the P2PNodeI interface and provides the core functionality
+// Node implements the NodeI interface and provides the core functionality
 // for peer-to-peer networking in BSV blockchain applications using libp2p.
 // It manages peer connections, topic subscriptions, message routing, and network discovery.
 //
-// The P2PNode encapsulates several critical components:
+// The Node encapsulates several critical components:
 // - libp2p host for network transport and connection management
 // - PubSub for topic-based message distribution
 // - Peer height tracking for blockchain synchronization
 // - Bandwidth and activity metrics for monitoring
 //
 // Thread safety is maintained for all concurrent operations across multiple goroutines.
-type P2PNode struct {
-	config            P2PConfig                      // Configuration parameters for the node
+type Node struct {
+	config            Config                         // Configuration parameters for the node
 	host              host.Host                      // libp2p host for network communication
 	pubSub            *pubsub.PubSub                 // Publish-subscribe system for topic-based messaging
 	topics            map[string]*pubsub.Topic       // Map of topic names to topic objects
@@ -59,10 +59,10 @@ type P2PNode struct {
 // in high-traffic scenarios. Any long-running operations should be delegated to separate goroutines.
 type Handler func(ctx context.Context, msg []byte, from string)
 
-// P2PConfig defines the configuration parameters for a P2P node.
+// Config defines the configuration parameters for a P2P node.
 // It encapsulates all settings needed to establish and maintain
 // a functional peer-to-peer network presence.
-type P2PConfig struct {
+type Config struct {
 	ProcessName        string   // Identifier for this node in logs and metrics
 	BootstrapAddresses []string // Initial peer addresses to connect to for network discovery
 	ListenAddresses    []string // Network addresses to listen on for incoming connections

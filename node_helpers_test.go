@@ -80,15 +80,15 @@ func TestDecodeHexEd25519PrivateKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			key, err := decodeHexEd25519PrivateKey(tt.hexKey)
-			
+
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 				if tt.errMsg != "" {
 					assert.Contains(t, err.Error(), tt.errMsg)
 				}
 				assert.Nil(t, key)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NotNil(t, key)
 				assert.Equal(t, crypto.Ed25519, (*key).Type())
 			}
@@ -159,7 +159,7 @@ func TestBuildAdvertiseMultiAddrs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := buildAdvertiseMultiAddrs(tt.addrs, tt.defaultPort)
 			assert.Len(t, result, tt.expectedLen)
-			
+
 			if tt.validateFunc != nil {
 				tt.validateFunc(t, result)
 			}
@@ -218,11 +218,11 @@ func TestGetIPFromMultiaddr(t *testing.T) {
 			require.NoError(t, err)
 
 			ip, err := getIPFromMultiaddr(maddr)
-			
+
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.expected, ip)
 			}
 		})

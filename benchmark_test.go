@@ -1,3 +1,4 @@
+// Package p2p provides benchmark tests for P2P networking functionality.
 package p2p
 
 import (
@@ -20,7 +21,7 @@ func BenchmarkP2PNode_Publish(b *testing.B) {
 	logger.SetLevel(logrus.ErrorLevel)
 
 	ctx := context.Background()
-	config := P2PConfig{
+	config := Config{
 		ProcessName:     "bench-publish",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -35,11 +36,11 @@ func BenchmarkP2PNode_Publish(b *testing.B) {
 
 	// Test different message sizes
 	messageSizes := []int{
-		100,      // 100 bytes
-		1024,     // 1 KB
-		10240,    // 10 KB
-		102400,   // 100 KB
-		1048576,  // 1 MB
+		100,     // 100 bytes
+		1024,    // 1 KB
+		10240,   // 10 KB
+		102400,  // 100 KB
+		1048576, // 1 MB
 	}
 
 	for _, size := range messageSizes {
@@ -69,7 +70,7 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 	ctx := context.Background()
 
 	// Create two nodes
-	config1 := P2PConfig{
+	config1 := Config{
 		ProcessName:     "bench-sender",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -79,7 +80,7 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 	require.NoError(b, err)
 	defer sender.Stop(ctx)
 
-	config2 := P2PConfig{
+	config2 := Config{
 		ProcessName:     "bench-receiver",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -93,9 +94,9 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 	streamHandler := func(stream network.Stream) {
 		buf := make([]byte, 1048576) // 1MB buffer
 		for {
-			_, err := stream.Read(buf)
+			_, err = stream.Read(buf)
 			if err != nil {
-				stream.Close()
+				err = stream.Close()
 				return
 			}
 		}
@@ -144,7 +145,7 @@ func BenchmarkP2PNode_ConcurrentConnections(b *testing.B) {
 	ctx := context.Background()
 
 	// Create a central node
-	centralConfig := P2PConfig{
+	centralConfig := Config{
 		ProcessName:     "central",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -166,7 +167,7 @@ func BenchmarkP2PNode_ConcurrentConnections(b *testing.B) {
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
-				nodes := make([]*P2PNode, numNodes)
+				nodes := make([]*Node, numNodes)
 				var wg sync.WaitGroup
 
 				// Create and connect nodes concurrently
@@ -175,14 +176,15 @@ func BenchmarkP2PNode_ConcurrentConnections(b *testing.B) {
 					go func(idx int) {
 						defer wg.Done()
 
-						config := P2PConfig{
+						config := Config{
 							ProcessName:     fmt.Sprintf("node%d", idx),
 							ListenAddresses: []string{"127.0.0.1"},
 							Port:            0,
 							StaticPeers:     []string{centralAddr},
 						}
 
-						node, err := NewP2PNode(ctx, logger, config)
+						var node *Node
+						node, err = NewP2PNode(ctx, logger, config)
 						if err != nil {
 							b.Error(err)
 							return
@@ -201,7 +203,8 @@ func BenchmarkP2PNode_ConcurrentConnections(b *testing.B) {
 				// Clean up nodes
 				for _, node := range nodes {
 					if node != nil {
-						node.Stop(ctx)
+						err = node.Stop(ctx)
+						require.NoError(b, err)
 					}
 				}
 			}
@@ -218,10 +221,10 @@ func BenchmarkP2PNode_MessageRouting(b *testing.B) {
 
 	// Create a network of nodes
 	numNodes := 5
-	nodes := make([]*P2PNode, numNodes)
+	nodes := make([]*Node, numNodes)
 
 	for i := 0; i < numNodes; i++ {
-		config := P2PConfig{
+		config := Config{
 			ProcessName:     fmt.Sprintf("router%d", i),
 			ListenAddresses: []string{"127.0.0.1"},
 			Port:            0,
@@ -249,12 +252,12 @@ func BenchmarkP2PNode_MessageRouting(b *testing.B) {
 	messageCount := &sync.Map{}
 	for i, node := range nodes {
 		nodeID := i
-		handler := func(ctx context.Context, msg []byte, from string) {
+		handler := func(_ context.Context, _ []byte, _ string) {
 			// Count messages received
 			val, _ := messageCount.LoadOrStore(nodeID, int64(0))
 			messageCount.Store(nodeID, val.(int64)+1)
 		}
-		
+
 		err := node.SetTopicHandler(ctx, "bench-routing", handler)
 		require.NoError(b, err)
 	}
@@ -278,7 +281,7 @@ func BenchmarkP2PNode_MessageRouting(b *testing.B) {
 }
 
 func BenchmarkP2PNode_AtomicOperations(b *testing.B) {
-	node := &P2PNode{}
+	node := &Node{}
 
 	b.Run("BytesSent", func(b *testing.B) {
 		b.RunParallel(func(pb *testing.PB) {
@@ -318,7 +321,7 @@ func BenchmarkP2PNode_PeerManagement(b *testing.B) {
 	logger.SetLevel(logrus.ErrorLevel)
 
 	ctx := context.Background()
-	config := P2PConfig{
+	config := Config{
 		ProcessName:     "bench-peer-mgmt",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -331,7 +334,7 @@ func BenchmarkP2PNode_PeerManagement(b *testing.B) {
 	// Pre-populate with peer data
 	numPeers := 1000
 	peerIDs := make([]peer.ID, numPeers)
-	
+
 	for i := 0; i < numPeers; i++ {
 		// Generate unique peer IDs
 		peerID, _ := peer.Decode(fmt.Sprintf("12D3KooW%039d", i))
@@ -421,10 +424,10 @@ func BenchmarkP2PNode_MemoryAllocation(b *testing.B) {
 
 	b.Run("NewP2PNode", func(b *testing.B) {
 		ctx := context.Background()
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			config := P2PConfig{
+			config := Config{
 				ProcessName:     fmt.Sprintf("mem-test-%d", i),
 				ListenAddresses: []string{"127.0.0.1"},
 				Port:            0,
@@ -434,7 +437,8 @@ func BenchmarkP2PNode_MemoryAllocation(b *testing.B) {
 			if err != nil {
 				b.Fatal(err)
 			}
-			node.host.Close()
+			err = node.host.Close()
+			require.NoError(b, err)
 		}
 	})
 

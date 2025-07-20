@@ -1,3 +1,4 @@
+// Package mocks provides mock implementations for P2P node interfaces used in testing.
 package mocks
 
 import (

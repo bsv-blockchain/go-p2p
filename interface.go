@@ -2,13 +2,14 @@ package p2p
 
 import (
 	"context"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/core/peer"
 	"time"
+
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
-// P2PNodeI defines the interface for P2P node functionality.
+// NodeI defines the interface for P2P node functionality.
 // This interface abstracts the concrete implementation to allow for better testability.
 // It provides methods for managing core peer-to-peer networking operations, including
 // node lifecycle management, topic subscription, peer discovery, and message propagation.
@@ -16,7 +17,7 @@ import (
 // The interface is designed to be robust for both standard network operation and
 // specialized testing scenarios. It encapsulates all libp2p functionality behind
 // a clean API that integrates with BSV blockchain applications.
-type P2PNodeI interface {
+type NodeI interface {
 	// Core lifecycle methods
 	Start(ctx context.Context, streamHandler func(network.Stream), topicNames ...string) error
 	Stop(ctx context.Context) error

@@ -16,7 +16,7 @@ func main() {
 	logger.SetLevel(logrus.InfoLevel)
 
 	// Configure P2P node
-	config := p2p.P2PConfig{
+	config := p2p.Config{
 		ProcessName:     "example-node",
 		ListenAddresses: []string{"0.0.0.0"},
 		Port:            8333,
@@ -31,7 +31,7 @@ func main() {
 	}
 
 	// Set up a simple message handler for the "example" topic
-	messageHandler := func(ctx context.Context, msg []byte, from string) {
+	messageHandler := func(_ context.Context, msg []byte, from string) {
 		logger.Infof("Received message from %s: %s", from, string(msg))
 	}
 
@@ -69,7 +69,7 @@ func main() {
 		case <-ticker.C:
 			peers := node.CurrentlyConnectedPeers()
 			logger.Infof("Currently connected to %d peers", len(peers))
-			
+
 			stats := map[string]interface{}{
 				"bytes_sent":     node.BytesSent(),
 				"bytes_received": node.BytesReceived(),

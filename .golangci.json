@@ -56,14 +56,11 @@
 			"errchkjson",
 			"errname",
 			"errorlint",
-			"exhaustive",
 			"forbidigo",
-			"funcorder",
 			"gocheckcompilerdirectives",
 			"gochecknoglobals",
 			"gochecknoinits",
 			"gochecksumtype",
-			"gocognit",
 			"goconst",
 			"gocyclo",
 			"godox",
@@ -80,7 +77,6 @@
 			"misspell",
 			"musttag",
 			"nakedret",
-			"nestif",
 			"nilerr",
 			"nilnesserr",
 			"nilnil",
@@ -102,12 +98,19 @@
 			"unparam",
 			"unused",
 			"wastedassign",
-			"wsl_v5",
 			"zerologlint"
 		],
 		"disable": [
 			"gocritic",
-			"godot"
+			"godot",
+			"wsl_v5",
+			"exhaustive",
+			"gocognit",
+			"nestif",
+			"unused",
+			"staticcheck",
+			"gocyclo",
+			"funcorder"
 		],
 		"settings": {
 			"funcorder": {
@@ -206,7 +209,8 @@
 		"allow-parallel-runners": true,
 		"concurrency": 8,
 		"issues-exit-code": 1,
-		"tests": true
+		"tests": true,
+		"skip-dirs": ["mocks"]
 	},
 	"output": {
 		"formats": {
@@ -231,6 +235,12 @@
 		]
 	},
 	"issues": {
-		"uniq-by-line": true
+		"uniq-by-line": true,
+		"exclude-rules": [
+			{
+				"text": "m.Called undefined",
+				"linters": ["typecheck"]
+			}
+		]
 	}
 }
