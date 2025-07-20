@@ -10,37 +10,56 @@ async function main() {
 
   // Configuration from teranode-p2p-poc/config.yaml
   const options = {
-    listenAddresses: ['/ip4/127.0.0.1/tcp/9901'],
+    listenAddresses: ['/ip4/127.0.0.1/tcp/9902'],
     bootstrapPeers: ['/dns4/teranode-bootstrap.bsvb.tech/tcp/9901/p2p/12D3KooWESmhNAN8s6NPdGNvJH3zJ4wMKDxapXKNUe2DzkAwKYqK'],
     usePrivateDHT: true,
     sharedKey: '285b49e6d910726a70f205086c39cbac6d8dcc47839053a21b1f614773bbc137',
     dhtProtocolID: '/teranode',
-    port: 9901
+    port: 9901,
+    logLevel: 'debug'
   };
 
-  const node = await P2PNode.create(messageHandler, options);
+  const p2p = await P2PNode.create(messageHandler, options);
 
   console.log('P2P node started');
 
-  // Publish a test message after a short delay
-  setTimeout(async () => {
-    try {
-      // await node.publish('Hello from TypeScript P2P demo!');
-      console.log('Would have published test message');
-    } catch (error) {
-      console.error('Failed to publish:', error);
-    }
-  }, 5000);
-
-  // Periodically log connected peers
+  // Periodically log connected peers and status
   setInterval(async () => {
-    // Note: Add methods to P2PNode if needed for getting peers/stats
-    console.log('Node is running...');
-  }, 30000);
+    const connectedPeers = p2p.getConnectedPeers();
+    const nodeId = p2p.getNodeId();
+    
+    console.log('\n=== Node Status ===');
+    console.log('Node ID:', nodeId);
+    console.log('Connected peers:', connectedPeers.length);
+    
+    if (connectedPeers.length > 0) {
+      console.log('Peer IDs:', connectedPeers.map(p => p.toString()));
+      
+      // Check topic subscribers for each topic
+      const topics = [
+        'bitcoin/mainnet-bestblock',
+        'bitcoin/mainnet-block',
+        'bitcoin/mainnet-subtree',
+        'bitcoin/mainnet-mining_on',
+        'bitcoin/mainnet-handshake',
+        'bitcoin/mainnet-rejected_tx'
+      ];
+      
+      for (const topic of topics) {
+        const subscribers = await p2p.getTopicPeers(topic);
+        if (subscribers.length > 0) {
+          console.log(`Topic ${topic} has ${subscribers.length} subscribers:`, subscribers.map(p => p.toString()));
+        }
+      }
+    } else {
+      console.log('No peers connected yet...');
+    }
+    console.log('==================\n');
+  }, 15000);
 
   // Graceful shutdown
   process.on('SIGINT', async () => {
-    await node.stop();
+    await p2p.stop();
     console.log('Node stopped');
     process.exit(0);
   });

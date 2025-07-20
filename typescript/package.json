@@ -6,7 +6,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "demo": "tsx demo.ts"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,10 @@
     "@libp2p/bootstrap": "^11.0.46",
     "@libp2p/identify": "^3.0.38",
     "@libp2p/interface": "^2.10.5",
+    "@libp2p/kad-dht": "^15.1.10",
+    "@libp2p/ping": "^2.0.36",
+    "@libp2p/pnet": "^2.0.46",
+    "@libp2p/pubsub-peer-discovery": "^11.0.2",
     "@libp2p/tcp": "^10.1.18",
     "libp2p": "^2.9.0",
     "uint8arrays": "^5.1.0"
