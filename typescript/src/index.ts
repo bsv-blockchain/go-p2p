@@ -97,7 +97,13 @@ export class P2PNode {
       streamMuxers: [yamux()],
       connectionEncrypters: [noise()],
       services: {
-        pubsub: gossipsub({ allowPublishToZeroTopicPeers: true }),
+        pubsub: gossipsub({ 
+          allowPublishToZeroTopicPeers: true,
+          emitSelf: false,
+          fallbackToFloodsub: true,
+          floodPublish: true,
+          doPX: true
+        }),
         identify: identify(),
         ping: ping()
       },
@@ -105,15 +111,26 @@ export class P2PNode {
         bootstrap({ list: options.bootstrapPeers || [] }), 
         pubsubPeerDiscovery({
           topics: this.topics,
-          interval: 10000,
+          interval: 5000,
         })],
     };
 
-    // Add DHT service
-    libp2pOptions.services.dht = kadDHT({
-      protocol: (options.dhtProtocolID || '/ipfs') + '/kad/1.0.0',
-      clientMode: false
-    });
+    // Add DHT service - configure differently for private vs public networks
+    if (options.usePrivateDHT && options.dhtProtocolID) {
+      // Private DHT configuration to match Go implementation
+      libp2pOptions.services.dht = kadDHT({
+        protocol: options.dhtProtocolID + '/kad/1.0.0',
+        clientMode: false,
+        validators: {},
+        selectors: {}
+      });
+    } else {
+      // Public DHT configuration
+      libp2pOptions.services.dht = kadDHT({
+        protocol: '/ipfs/kad/1.0.0',
+        clientMode: false
+      });
+    }
 
     if (options.usePrivateDHT && options.sharedKey) {
       this.logger.info('Using private DHT with shared key:', options.sharedKey);
@@ -125,12 +142,6 @@ export class P2PNode {
       libp2pOptions.connectionProtector = preSharedKey({
         psk: new TextEncoder().encode(pskString)
       });
-      
-      if (options.dhtProtocolID) {
-        libp2pOptions.dht = {
-          protocolPrefix: options.dhtProtocolID
-        };
-      }
     }
 
     this.logger.info('Creating libp2p node with options:', {
@@ -176,12 +187,25 @@ export class P2PNode {
       }
     });
 
-    // Subscribe to the topic
+    // Subscribe to topics and advertise them
     for (const topic of this.topics) {
       this.logger.info(`Subscribing to topic: ${topic}`);
       this.node.services.pubsub.subscribe(topic);
       const subscribers = this.node.services.pubsub.getSubscribers(topic).map(p => p.toString());
       this.logger.info(`Subscribers for ${topic}:`, subscribers);
+      
+      // Advertise topic subscription via DHT (similar to Go implementation)
+      try {
+        if ('dht' in this.node.services) {
+          const topicKey = new TextEncoder().encode(`/pubsub/topic/${topic}`);
+          await (this.node.services as any).dht.provide(topicKey);
+          this.logger.info(`Advertising topic: ${topic}`);
+        } else {
+          this.logger.warn('DHT service not available for topic advertising');
+        }
+      } catch (error) {
+        this.logger.warn(`Failed to advertise topic ${topic}:`, error);
+      }
     }
 
     // Create component-specific logger for gossipsub
@@ -227,6 +251,15 @@ export class P2PNode {
     if (!this.node) {
       return [];
     }
-    return this.node.services.pubsub.getSubscribers(topic);
+    const subscribers = this.node.services.pubsub.getSubscribers(topic);
+    // Handle different return formats
+    if (Array.isArray(subscribers)) {
+      return subscribers;
+    }
+    // If it returns an object with subscribers property
+    if (subscribers && typeof subscribers === 'object' && 'subscribers' in subscribers) {
+      return (subscribers as any).subscribers || [];
+    }
+    return [];
   }
 }
