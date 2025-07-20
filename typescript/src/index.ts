@@ -156,33 +156,6 @@ export class P2PNode {
     await this.node.start();
     this.logger.info('Libp2p node started successfully');
 
-    // Wait for pubsub service to be ready
-    this.logger.info('Waiting for pubsub service to be ready...');
-    let pubsubReady = false;
-    let attempts = 0;
-    const maxAttempts = 10;
-    
-    while (!pubsubReady && attempts < maxAttempts) {
-      try {
-        if (this.node.services.pubsub && this.node.services.pubsub.isStarted()) {
-          pubsubReady = true;
-          this.logger.info('Pubsub service is ready');
-        } else {
-          this.logger.info(`Pubsub not ready yet, attempt ${attempts + 1}/${maxAttempts}`);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          attempts++;
-        }
-      } catch (error) {
-        this.logger.warn(`Error checking pubsub status (attempt ${attempts + 1}):`, error);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        attempts++;
-      }
-    }
-    
-    if (!pubsubReady) {
-      throw new Error('Pubsub service failed to start after maximum attempts');
-    }
-
     // Add event listeners for debugging
     this.node.addEventListener('peer:discovery', async (evt) => {
       this.logger.info('Peer discovered:', evt.detail.id.toString());
