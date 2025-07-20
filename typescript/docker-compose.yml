@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  ts-demo:
+    build: .
+    container_name: ts-demo
+    ports:
+      - "9901:9901"
+    environment:
+      - NODE_ENV=production
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    networks:
+      - p2p-network
+
+networks:
+  p2p-network:
+    driver: bridge
