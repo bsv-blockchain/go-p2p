@@ -167,73 +167,6 @@ go get -u github.com/bsv-blockchain/go-p2p
 </details>
 
 <details>
-<summary><strong><code>Repository File Glossary</code></strong></summary>
-<br/>
-
-This glossary describes each tracked file in the repository and notes if it is required for GitHub or another external service.
-
-| File Path                                                                                            | Description                                     | Service          |
-|------------------------------------------------------------------------------------------------------|-------------------------------------------------|------------------|
-| [.cursorrules](.cursorrules)                                                                         | Rules for Cursor AI integrations                | Cursor           |
-| [.devcontainer.json](.devcontainer.json)                                                             | VS Code dev or GitHub container configuration   | VS Code & GitHub |
-| [.dockerignore](.dockerignore)                                                                       | Paths ignored by Docker builds                  | Docker           |
-| [.editorconfig](.editorconfig)                                                                       | Editor configuration defaults                   | Editor           |
-| [.gitattributes](.gitattributes)                                                                     | Git attributes and export settings              | Git              |
-| [.github/.env.shared](.github/.env.shared)                                                           | Shared environment variables for GitHub Actions | GitHub Actions   |
-| [.github/AGENTS.md](.github/AGENTS.md)                                                               | Contribution rules and guidelines               | GitHub           |
-| [.github/CLAUDE.md](.github/CLAUDE.md)                                                               | Claude agent instructions                       | Claude           |
-| [.github/CODEOWNERS](.github/CODEOWNERS)                                                             | Code ownership declarations for GitHub          | GitHub           |
-| [.github/CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md)                                             | Community behavior standards                    | GitHub           |
-| [.github/CODE_STANDARDS.md](.github/CODE_STANDARDS.md)                                               | Coding style guide                              | GitHub           |
-| [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md)                                                   | How to contribute to the project                | GitHub           |
-| [.github/FUNDING.yml](.github/FUNDING.yml)                                                           | Funding links displayed by GitHub               | GitHub           |
-| [.github/ISSUE_TEMPLATE/bug_report.yml](.github/ISSUE_TEMPLATE/bug_report.yml)                       | Issue template for bug reports                  | GitHub           |
-| [.github/ISSUE_TEMPLATE/feature_request.yml](.github/ISSUE_TEMPLATE/feature_request.yml)             | Issue template for feature requests             | GitHub           |
-| [.github/ISSUE_TEMPLATE/question.yml](.github/ISSUE_TEMPLATE/question.yml)                           | Issue template for questions                    | GitHub           |
-| [.github/SECURITY.md](.github/SECURITY.md)                                                           | Security policy                                 | GitHub           |
-| [.github/SUPPORT.md](.github/SUPPORT.md)                                                             | Support guidelines                              | GitHub           |
-| [.github/actions/warm-cache/action.yml](.github/actions/warm-cache/action.yml)                       | Action to warm GitHub Actions cache             | GitHub Actions   |
-| [.github/dependabot.yml](.github/dependabot.yml)                                                     | Dependabot configuration                        | GitHub           |
-| [.github/labels.yml](.github/labels.yml)                                                             | Repository label definitions                    | GitHub           |
-| [.github/pull_request_template.md](.github/pull_request_template.md)                                 | Pull request description template               | GitHub           |
-| [.github/sweep.yaml](.github/sweep.yaml)                                                             | Sweep AI configuration                          | Sweep AI         |
-| [.github/workflows/auto-merge-on-approval.yml](.github/workflows/auto-merge-on-approval.yml)         | Workflow for automatic merges                   | GitHub Actions   |
-| [.github/workflows/codeql-analysis.yml](.github/workflows/codeql-analysis.yml)                       | CodeQL security analysis workflow               | GitHub Actions   |
-| [.github/workflows/dependabot-auto-merge.yml](.github/workflows/dependabot-auto-merge.yml)           | Auto merge Dependabot PRs                       | GitHub Actions   |
-| [.github/workflows/fortress.yml](.github/workflows/fortress.yml)                                     | Fortress security & testing workflow            | GitHub Actions   |
-| [.github/workflows/pull-request-management.yml](.github/workflows/pull-request-management.yml)       | Pull request triage workflow                    | GitHub Actions   |
-| [.github/workflows/scorecard.yml](.github/workflows/scorecard.yml)                                   | OpenSSF Scorecard workflow                      | GitHub Actions   |
-| [.github/workflows/stale.yml](.github/workflows/stale-check.yml)                                     | Close stale issues and PRs                      | GitHub Actions   |
-| [.github/workflows/sync-labels.yml](.github/workflows/sync-labels.yml)                               | Sync repository labels                          | GitHub Actions   |
-| [.github/workflows/update-python-dependencies.yml](.github/workflows/update-python-dependencies.yml) | Update Python dependencies for pre-commit hooks | GitHub Actions   |
-| [.github/workflows/update-pre-commit-hooks.yml](.github/workflows/update-pre-commit-hooks.yml)       | Automatically update pre-commit hooks           | GitHub Actions   |
-| [.gitignore](.gitignore)                                                                             | Files and directories Git should ignore         | Git              |
-| [.gitpod.yml](.gitpod.yml)                                                                           | Gitpod workspace configuration                  | Gitpod           |
-| [.golangci.json](.golangci.json)                                                                     | GolangCI-Lint configuration                     | GolangCI-Lint    |
-| [.goreleaser.yml](.goreleaser.yml)                                                                   | GoReleaser configuration for release automation | GoReleaser       |
-| [.make/common.mk](.make/common.mk)                                                                   | Shared make tasks                               | Make             |
-| [.make/go.mk](.make/go.mk)                                                                           | Go-specific make tasks                          | Make             |
-| [.make/temp.mk](.make/temp.mk)                                                                       | Temporary makefile for internal use             | Make             |
-| [.pre-commit-config.yaml](.pre-commit-config.yaml)                                                   | Pre-commit hooks configuration                  | Pre-commit       |
-| [.vscode/extensions.json](.vscode/extensions.json)                                                   | Recommended VS Code extensions                  | VS Code          |
-| [.vscode/launch.json](.vscode/launch.json)                                                           | VS Code debugging configuration                 | VS Code          |
-| [.vscode/settings.json](.vscode/settings.json)                                                       | VS Code workspace settings                      | VS Code          |
-| [.vscode/tasks.json](.vscode/tasks.json)                                                             | VS Code tasks configuration                     | VS Code          |
-| [Dockerfile](Dockerfile)                                                                             | Docker image build instructions                 | Docker           |
-| [LICENSE](LICENSE)                                                                                   | Project license                                 | Yours!           |
-| [Makefile](Makefile)                                                                                 | Build and lint automation                       | Make             |
-| [README.md](README.md)                                                                               | Project overview and usage                      | Yours!           |
-| [codecov.yml](codecov.yml)                                                                           | Codecov upload configuration                    | Codecov          |
-| [examples/example.go](examples/example.go)                                                           | Example usage of the P2P library                | None             |
-| [go.mod](go.mod)                                                                                     | Go module definition                            | Go               |
-| [go.sum](go.sum)                                                                                     | Dependency checksums generated by Go            | Go               |
-| [interface.go](interface.go)                                                                         | P2P node interface definition                   | Yours!           |
-| [node.go](node.go)                                                                                   | Main P2P node implementation                    | Yours!           |
-| [p2p.go](p2p.go)                                                                                     | P2P package entry point                        | Yours!           |
-| [types.go](types.go)                                                                                 | P2P configuration and data types               | Yours!           |
-</details>
-
-<details>
 <summary><strong><code>Library Deployment</code></strong></summary>
 <br/>
 
@@ -459,4 +392,4 @@ You can also support this project by [becoming a sponsor on GitHub](https://gith
 
 ## 📝 License
 
-[![License](https://img.shields.io/github/license/bsv-blockchain/go-p2p.svg?style=flat&v=1)](LICENSE)
+[![License](https://img.shields.io/badge/license-OpenBSV-blue?style=flat&logo=springsecurity&logoColor=white)](LICENSE)

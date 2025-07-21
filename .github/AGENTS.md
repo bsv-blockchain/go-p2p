@@ -18,19 +18,7 @@ Additional `AGENTS.md` files **may exist in subdirectories** to provide more con
 
 ## 🔍 Project Overview
 
-**go-p2p** is a production-ready scaffold for building new Go libraries with zero setup friction.
-It ships with opinionated defaults that reflect current best practices—clean project layout,
-module-aware dependency management, and Makefiles that automate everything from linting and race-condition
-testing to snapshot releases. Out of the box, GitHub Actions orchestrate CI/CD: unit tests (with `testify`),
-coverage upload to Codecov, static analysis via golangci-lint and CodeQL, vulnerability auditing with Nancy,
-and one-command releases through GoReleaser.
-
-Beyond automation, the template supplies all the "undifferentiated heavy lifting" a maintainer usually
-adds manually: standard README and license, issue and PR templates, CODEOWNERS, semantic version tagging helpers,
-label synchronization, and optional Slack/Discord/Twitter release announcements. Example functions, fuzz tests and
-benchmarks are already wired in, so you can focus on writing library code instead of plumbing.
-Clone, rename a few placeholders, and you have a fully instrumented Go library that is ready for continuous
-delivery and open-source collaboration from day one.
+**go-p2p** is a comprehensive peer-to-peer networking library for BSV blockchain nodes, built on top of [libp2p](https://libp2p.io/). It provides robust networking capabilities for distributed blockchain applications with support for both public and private networks.
 
 <br/>
 
@@ -39,13 +27,14 @@ delivery and open-source collaboration from day one.
 <br/>
 
 ## 📁 Directory Structure
-| Directory        | Description                                                                       |
-|------------------|-----------------------------------------------------------------------------------|
-| `.github/`       | Issue templates, workflows, and community documentation                           |
-| `.vscode/`       | VS Code settings and extensions for development                                   |
-| `.make/`         | Shared Makefile targets used by `Makefile`                                        |
-| `examples/`      | Example program demonstrating package usage                                       |
-| `.` (root)       | Source files and tests for the local package                                      |
+| Directory   | Description                                             |
+|-------------|---------------------------------------------------------|
+| `.github/`  | Issue templates, workflows, and community documentation |
+| `.vscode/`  | VS Code settings and extensions for development         |
+| `.make/`    | Shared Makefile targets used by `Makefile`              |
+| `examples/` | Example program demonstrating package usage             |
+| `mocks/`    | Mock implementations for testing purposes               |
+| `.` (root)  | Source files and tests for the local package            |
 
 <br/>
 
@@ -1328,7 +1317,7 @@ All contributors are expected to append entries here when making meaningful chan
 
 | Date       | Author   | Summary of Changes                |
 |------------|----------|-----------------------------------|
-| 2025-07-08 | @mrz1836 | Updated from original source repo |
+| 2025-07-21 | @mrz1836 | Updated from original source repo |
 | 2025-07-01 | @mrz1836 | Adapted to fix this project       |
 > For minor edits (typos, formatting), this log update is optional. For all behavioral or structural changes, log entries are **required**.
 
