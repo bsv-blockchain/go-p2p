@@ -13,17 +13,17 @@ import (
 func TestP2PConfig_Validation(t *testing.T) {
 	tests := []struct {
 		name     string
-		config   P2PConfig
-		validate func(t *testing.T, config P2PConfig)
+		config   Config
+		validate func(t *testing.T, config Config)
 	}{
 		{
 			name: "valid basic config",
-			config: P2PConfig{
+			config: Config{
 				ProcessName:     "test-node",
 				ListenAddresses: []string{"127.0.0.1"},
 				Port:            4001,
 			},
-			validate: func(t *testing.T, config P2PConfig) {
+			validate: func(t *testing.T, config Config) {
 				assert.Equal(t, "test-node", config.ProcessName)
 				assert.Equal(t, 4001, config.Port)
 				assert.Len(t, config.ListenAddresses, 1)
@@ -31,7 +31,7 @@ func TestP2PConfig_Validation(t *testing.T) {
 		},
 		{
 			name: "config with private DHT",
-			config: P2PConfig{
+			config: Config{
 				ProcessName:        "private-node",
 				ListenAddresses:    []string{"0.0.0.0"},
 				Port:               5001,
@@ -40,7 +40,7 @@ func TestP2PConfig_Validation(t *testing.T) {
 				DHTProtocolID:      "/custom/dht/1.0.0",
 				BootstrapAddresses: []string{"/ip4/10.0.0.1/tcp/4001/p2p/12D3KooWTest"},
 			},
-			validate: func(t *testing.T, config P2PConfig) {
+			validate: func(t *testing.T, config Config) {
 				assert.True(t, config.UsePrivateDHT)
 				assert.Equal(t, "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", config.SharedKey)
 				assert.Equal(t, "/custom/dht/1.0.0", config.DHTProtocolID)
@@ -49,14 +49,14 @@ func TestP2PConfig_Validation(t *testing.T) {
 		},
 		{
 			name: "config with advertise addresses",
-			config: P2PConfig{
+			config: Config{
 				ProcessName:        "public-node",
 				ListenAddresses:    []string{"0.0.0.0"},
 				AdvertiseAddresses: []string{"1.2.3.4", "example.com:4002"},
 				Port:               4001,
 				Advertise:          true,
 			},
-			validate: func(t *testing.T, config P2PConfig) {
+			validate: func(t *testing.T, config Config) {
 				assert.True(t, config.Advertise)
 				assert.Len(t, config.AdvertiseAddresses, 2)
 				assert.Contains(t, config.AdvertiseAddresses, "1.2.3.4")
@@ -65,7 +65,7 @@ func TestP2PConfig_Validation(t *testing.T) {
 		},
 		{
 			name: "config with static peers",
-			config: P2PConfig{
+			config: Config{
 				ProcessName:     "connected-node",
 				ListenAddresses: []string{"127.0.0.1"},
 				Port:            4001,
@@ -75,19 +75,19 @@ func TestP2PConfig_Validation(t *testing.T) {
 				},
 				OptimiseRetries: true,
 			},
-			validate: func(t *testing.T, config P2PConfig) {
+			validate: func(t *testing.T, config Config) {
 				assert.True(t, config.OptimiseRetries)
 				assert.Len(t, config.StaticPeers, 2)
 			},
 		},
 		{
 			name: "empty config fields",
-			config: P2PConfig{
+			config: Config{
 				ProcessName:     "",
 				ListenAddresses: []string{},
 				Port:            0,
 			},
-			validate: func(t *testing.T, config P2PConfig) {
+			validate: func(t *testing.T, config Config) {
 				assert.Empty(t, config.ProcessName)
 				assert.Empty(t, config.ListenAddresses)
 				assert.Zero(t, config.Port)
@@ -103,7 +103,7 @@ func TestP2PConfig_Validation(t *testing.T) {
 }
 
 func TestP2PNode_AtomicOperations(t *testing.T) {
-	node := &P2PNode{
+	node := &Node{
 		bytesSent:     0,
 		bytesReceived: 0,
 		lastSend:      0,
@@ -126,7 +126,7 @@ func TestP2PNode_AtomicOperations(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-	assert.Equal(t, uint64(goroutines*iterations), atomic.LoadUint64(&node.bytesSent))
+	assert.Equal(t, uint64(goroutines*iterations), atomic.LoadUint64(&node.bytesSent)) //nolint:gosec // used in tests
 
 	// Test bytesReceived increments
 	wg.Add(goroutines)
@@ -139,7 +139,7 @@ func TestP2PNode_AtomicOperations(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-	assert.Equal(t, uint64(goroutines*iterations*10), atomic.LoadUint64(&node.bytesReceived))
+	assert.Equal(t, uint64(goroutines*iterations*10), atomic.LoadUint64(&node.bytesReceived)) //nolint:gosec // used in tests
 
 	// Test timestamp updates
 	now := time.Now().Unix()
@@ -151,7 +151,7 @@ func TestP2PNode_AtomicOperations(t *testing.T) {
 }
 
 func TestP2PNode_ThreadSafeMaps(t *testing.T) {
-	node := &P2PNode{
+	node := &Node{
 		peerHeights:   sync.Map{},
 		peerConnTimes: sync.Map{},
 	}
@@ -169,12 +169,12 @@ func TestP2PNode_ThreadSafeMaps(t *testing.T) {
 	wg.Add(peers * 2)
 	for i := 0; i < peers; i++ {
 		peerID := testPeerIDs[i%len(testPeerIDs)]
-		
+
 		// Writer goroutine
 		go func(id string, height int32) {
 			defer wg.Done()
 			node.peerHeights.Store(id, height)
-		}(peerID, int32(i))
+		}(peerID, int32(i)) //nolint:gosec // used in tests
 
 		// Reader goroutine
 		go func(id string) {
@@ -186,11 +186,11 @@ func TestP2PNode_ThreadSafeMaps(t *testing.T) {
 
 	// Verify some values were stored
 	count := 0
-	node.peerHeights.Range(func(key, value interface{}) bool {
+	node.peerHeights.Range(func(_, _ interface{}) bool {
 		count++
 		return true
 	})
-	assert.Greater(t, count, 0)
+	assert.Positive(t, count)
 
 	// Test peerConnTimes concurrent access
 	wg.Add(peers)
@@ -207,7 +207,7 @@ func TestP2PNode_ThreadSafeMaps(t *testing.T) {
 
 func TestHandler_FunctionType(t *testing.T) {
 	// Test that Handler type can be properly instantiated
-	var handler Handler = func(ctx context.Context, msg []byte, from string) {
+	var handler Handler = func(_ context.Context, _ []byte, _ string) {
 		// Sample handler implementation
 	}
 
@@ -216,6 +216,6 @@ func TestHandler_FunctionType(t *testing.T) {
 
 func TestConstants(t *testing.T) {
 	// Verify constants are defined correctly
-	assert.Equal(t, "[P2PNode] error creating DHT", errorCreatingDhtMessage)
+	assert.Equal(t, "[Node] error creating DHT: %w", errorCreatingDhtMessage)
 	assert.Equal(t, "/ip4/%s/tcp/%d", multiAddrIPTemplate)
 }

@@ -25,10 +25,11 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 	defer cancel()
 
 	// Create first node
-	config1 := P2PConfig{
-		ProcessName:     "node1",
-		ListenAddresses: []string{"127.0.0.1"},
-		Port:            0, // Random port
+	config1 := Config{
+		ProcessName:        "node1",
+		ListenAddresses:    []string{"127.0.0.1"},
+		AdvertiseAddresses: []string{"127.0.0.1"},
+		Port:               3111, // Random port
 	}
 
 	node1, err := NewP2PNode(ctx, logger, config1)
@@ -39,11 +40,12 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 	node1Addr := fmt.Sprintf("%s/p2p/%s", node1.host.Addrs()[0], node1.host.ID())
 
 	// Create second node with static peer
-	config2 := P2PConfig{
-		ProcessName:     "node2",
-		ListenAddresses: []string{"127.0.0.1"},
-		Port:            0,
-		StaticPeers:     []string{node1Addr},
+	config2 := Config{
+		ProcessName:        "node2",
+		ListenAddresses:    []string{"127.0.0.1"},
+		AdvertiseAddresses: []string{"127.0.0.1"},
+		Port:               3112,
+		StaticPeers:        []string{node1Addr},
 	}
 
 	node2, err := NewP2PNode(ctx, logger, config2)
@@ -70,7 +72,7 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 			"invalid-address",
 			"/ip4/1.2.3.4/tcp/4001/p2p/invalid-peer-id",
 		}
-		
+
 		allConnected := node2.connectToStaticPeers(ctx, invalidPeers)
 		assert.False(t, allConnected)
 	})
@@ -81,7 +83,7 @@ func TestP2PNode_ShouldSkipPeer(t *testing.T) {
 	logger.SetLevel(logrus.ErrorLevel)
 
 	ctx := context.Background()
-	config := P2PConfig{
+	config := Config{
 		ProcessName:     "skip-test",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -96,11 +98,11 @@ func TestP2PNode_ShouldSkipPeer(t *testing.T) {
 	otherID, _ := peer.Decode("12D3KooWGRYZDHBembyGJQqQ6WgLqJWYNjnECJwGBnCg8vbCeo8F")
 
 	tests := []struct {
-		name         string
-		addr         peer.AddrInfo
-		setupFunc    func()
+		name            string
+		addr            peer.AddrInfo
+		setupFunc       func()
 		optimizeRetries bool
-		expectedSkip bool
+		expectedSkip    bool
 	}{
 		{
 			name: "skip self connection",
@@ -135,7 +137,7 @@ func TestP2PNode_ShouldSkipPeer(t *testing.T) {
 
 			node.config.OptimiseRetries = tt.optimizeRetries
 			peerAddrErrorMap := &sync.Map{}
-			
+
 			result := node.shouldSkipPeer(tt.addr, peerAddrErrorMap)
 			assert.Equal(t, tt.expectedSkip, result)
 		})
@@ -147,7 +149,7 @@ func TestP2PNode_ShouldSkipBasedOnErrors(t *testing.T) {
 	logger.SetLevel(logrus.ErrorLevel)
 
 	ctx := context.Background()
-	config := P2PConfig{
+	config := Config{
 		ProcessName:     "error-skip-test",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -207,10 +209,10 @@ func TestP2PNode_ShouldSkipBasedOnErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			peerAddrErrorMap := &sync.Map{}
-			
+
 			// Store the error
 			peerAddrErrorMap.Store(tt.addr.ID.String(), tt.errorString)
-			
+
 			result := node.shouldSkipBasedOnErrors(tt.addr, peerAddrErrorMap)
 			assert.Equal(t, tt.expectedSkip, result)
 		})
@@ -222,7 +224,7 @@ func TestP2PNode_ShouldSkipNoGoodAddresses(t *testing.T) {
 	logger.SetLevel(logrus.ErrorLevel)
 
 	ctx := context.Background()
-	config := P2PConfig{
+	config := Config{
 		ProcessName:     "no-good-addr-test",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -291,20 +293,22 @@ func TestP2PNode_AttemptConnection(t *testing.T) {
 	ctx := context.Background()
 
 	// Create two nodes
-	config1 := P2PConfig{
-		ProcessName:     "node1",
-		ListenAddresses: []string{"127.0.0.1"},
-		Port:            0,
+	config1 := Config{
+		ProcessName:        "node1",
+		ListenAddresses:    []string{"127.0.0.1"},
+		AdvertiseAddresses: []string{"127.0.0.1"},
+		Port:               3111,
 	}
 
 	node1, err := NewP2PNode(ctx, logger, config1)
 	require.NoError(t, err)
 	defer node1.host.Close()
 
-	config2 := P2PConfig{
-		ProcessName:     "node2",
-		ListenAddresses: []string{"127.0.0.1"},
-		Port:            0,
+	config2 := Config{
+		ProcessName:        "node2",
+		ListenAddresses:    []string{"127.0.0.1"},
+		AdvertiseAddresses: []string{"127.0.1"},
+		Port:               3112,
 	}
 
 	node2, err := NewP2PNode(ctx, logger, config2)
@@ -380,7 +384,7 @@ func TestP2PNode_PrivateNetwork(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("setUpPrivateNetwork success", func(t *testing.T) {
-		config := P2PConfig{
+		config := Config{
 			ProcessName:     "private-test",
 			ListenAddresses: []string{"127.0.0.1"},
 			Port:            4001,
@@ -390,7 +394,7 @@ func TestP2PNode_PrivateNetwork(t *testing.T) {
 		pk, err := generatePrivateKey(ctx)
 		require.NoError(t, err)
 
-		host, err := setUpPrivateNetwork(config, pk)
+		host, err := setUpPrivateNetwork(logger, config, pk)
 		require.NoError(t, err)
 		require.NotNil(t, host)
 		defer host.Close()
@@ -401,7 +405,7 @@ func TestP2PNode_PrivateNetwork(t *testing.T) {
 	})
 
 	t.Run("setUpPrivateNetwork with advertise addresses", func(t *testing.T) {
-		config := P2PConfig{
+		config := Config{
 			ProcessName:        "private-advertise-test",
 			ListenAddresses:    []string{"0.0.0.0"},
 			AdvertiseAddresses: []string{"1.2.3.4"},
@@ -412,14 +416,14 @@ func TestP2PNode_PrivateNetwork(t *testing.T) {
 		pk, err := generatePrivateKey(ctx)
 		require.NoError(t, err)
 
-		host, err := setUpPrivateNetwork(config, pk)
+		host, err := setUpPrivateNetwork(logger, config, pk)
 		require.NoError(t, err)
 		require.NotNil(t, host)
 		defer host.Close()
 	})
 
 	t.Run("setUpPrivateNetwork invalid shared key", func(t *testing.T) {
-		config := P2PConfig{
+		config := Config{
 			ProcessName:     "bad-private-test",
 			ListenAddresses: []string{"127.0.0.1"},
 			Port:            4003,
@@ -429,8 +433,8 @@ func TestP2PNode_PrivateNetwork(t *testing.T) {
 		pk, err := generatePrivateKey(ctx)
 		require.NoError(t, err)
 
-		host, err := setUpPrivateNetwork(config, pk)
-		assert.Error(t, err)
+		host, err := setUpPrivateNetwork(logger, config, pk)
+		require.Error(t, err)
 		assert.Contains(t, err.Error(), "error decoding shared key")
 		assert.Nil(t, host)
 	})
@@ -441,7 +445,7 @@ func TestP2PNode_InitDHT(t *testing.T) {
 	logger.SetLevel(logrus.ErrorLevel)
 
 	ctx := context.Background()
-	config := P2PConfig{
+	config := Config{
 		ProcessName:     "dht-test",
 		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
@@ -472,7 +476,7 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("no bootstrap addresses", func(t *testing.T) {
-		config := P2PConfig{
+		config := Config{
 			ProcessName:        "private-dht-test",
 			ListenAddresses:    []string{"127.0.0.1"},
 			Port:               0,
@@ -485,13 +489,13 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 		defer node.host.Close()
 
 		dht, err := node.initPrivateDHT(ctx, node.host)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Contains(t, err.Error(), "bootstrapAddresses not set")
 		assert.Nil(t, dht)
 	})
 
 	t.Run("invalid bootstrap addresses", func(t *testing.T) {
-		config := P2PConfig{
+		config := Config{
 			ProcessName:        "private-dht-test2",
 			ListenAddresses:    []string{"127.0.0.1"},
 			Port:               0,
@@ -504,13 +508,13 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 		defer node.host.Close()
 
 		dht, err := node.initPrivateDHT(ctx, node.host)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to connect to any bootstrap addresses")
 		assert.Nil(t, dht)
 	})
 
 	t.Run("missing DHT protocol ID", func(t *testing.T) {
-		config := P2PConfig{
+		config := Config{
 			ProcessName:        "private-dht-test3",
 			ListenAddresses:    []string{"127.0.0.1"},
 			Port:               0,
@@ -523,7 +527,7 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 		defer node.host.Close()
 
 		dht, err := node.initPrivateDHT(ctx, node.host)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Contains(t, err.Error(), "error getting p2p_dht_protocol_id")
 		assert.Nil(t, dht)
 	})
@@ -532,6 +536,7 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 // MockHost for testing - implements minimal host.Host interface
 type mockHost struct {
 	host.Host
+
 	id       peer.ID
 	network  network.Network
 	conns    map[peer.ID]network.Connectedness
@@ -553,10 +558,10 @@ func (m *mockHost) Network() network.Network {
 	return m.network
 }
 
-func (m *mockHost) Connect(ctx context.Context, pi peer.AddrInfo) error {
+func (m *mockHost) Connect(_ context.Context, pi peer.AddrInfo) error {
 	m.connLock.Lock()
 	defer m.connLock.Unlock()
-	
+
 	m.conns[pi.ID] = network.Connected
 	return nil
 }
