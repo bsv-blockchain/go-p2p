@@ -111,7 +111,7 @@ jobs:
     needs: [load-env, setup, test-makefile]
     strategy:
       fail-fast: true
-      matrix: ${{ fromJson(needs.setup.outputs.warm-cache-matrix) }}
+      matrix: ${{ fromJSON(needs.setup.outputs.warm-cache-matrix) }}
     runs-on: ${{ matrix.os }}
     steps:
       # ————————————————————————————————————————————————————————————————
