@@ -40,8 +40,10 @@ func TestGeneratePrivateKey(t *testing.T) {
 		require.NoError(t, err2)
 
 		// Compare raw bytes to ensure they're different
-		bytes1, _ := (*key1).Raw()
-		bytes2, _ := (*key2).Raw()
+		bytes1, err := (*key1).Raw()
+		require.NoError(t, err)
+		bytes2, err := (*key2).Raw()
+		require.NoError(t, err)
 		assert.NotEqual(t, bytes1, bytes2)
 	})
 }

@@ -73,7 +73,7 @@ func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 		}
 	} else {
 		// If no private DHT is configured, create a standard libp2p host
-		listenMultiAddresses := []string{}
+		var listenMultiAddresses []string
 		for _, addr := range config.ListenAddresses {
 			listenMultiAddresses = append(listenMultiAddresses, fmt.Sprintf("/ip4/%s/tcp/%d", addr, config.Port))
 		}
@@ -211,7 +211,7 @@ func setUpPrivateNetwork(logger Logger, config Config, pk *crypto.PrivKey) (host
 		return nil, fmt.Errorf("[Node] error decoding shared key: %w", err)
 	}
 
-	listenMultiAddresses := []string{}
+	listenMultiAddresses := make([]string, 0, len(config.ListenAddresses))
 	for _, addr := range config.ListenAddresses {
 		listenMultiAddresses = append(listenMultiAddresses, fmt.Sprintf(multiAddrIPTemplate, addr, config.Port))
 	}
@@ -844,7 +844,7 @@ func (s *Node) shouldSkipNoGoodAddresses(addr peer.AddrInfo) bool {
 	case 1:
 		address := addr.Addrs[0].String()
 		if strings.Contains(address, "127.0.0.1") {
-			// Peer has a single localhost address and it failed on first attempt
+			// Peer has a single localhost address, and it failed on first attempt
 			// You aren't allowed to dial 'yourself' and there are no other addresses available
 			return true
 		}

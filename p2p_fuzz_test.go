@@ -231,8 +231,9 @@ func FuzzMessageHandler(f *testing.F) {
 			_ = len(msgStr)
 
 			// Test JSON parsing attempt (should not panic)
+			// Intentionally ignoring error as we're testing panic resistance with arbitrary input
 			var dummy interface{}
-			_ = json.Unmarshal(msg, &dummy)
+			_ = json.Unmarshal(msg, &dummy) // Error ignored for fuzz testing
 		}
 
 		// Execute handler with fuzzed input
@@ -415,7 +416,9 @@ func FuzzNodeCreation(f *testing.F) {
 
 			// Clean up
 			if node != nil {
-				_ = node.Stop(ctx)
+				if err := node.Stop(ctx); err != nil {
+					t.Logf("Failed to stop node in cleanup: %v", err)
+				}
 			}
 		}
 	})

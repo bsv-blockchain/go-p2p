@@ -27,7 +27,11 @@ func TestP2PNode_TopicOperations(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.Stop(ctx)
+	defer func() {
+		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
+			t.Logf("Failed to stop node in cleanup: %v", err)
+		}
+	}()
 
 	// Start with some topics
 	err = node.Start(ctx, nil, "topic1", "topic2", "topic3")
@@ -92,7 +96,11 @@ func TestP2PNode_Publishing(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.Stop(ctx)
+	defer func() {
+		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
+			t.Logf("Failed to stop node in cleanup: %v", err)
+		}
+	}()
 
 	t.Run("Publish before start", func(t *testing.T) {
 		err = node.Publish(ctx, "topic", []byte("message"))
@@ -157,7 +165,11 @@ func TestP2PNode_Publishing(t *testing.T) {
 
 	sender, err := NewNode(ctx, logger, config1)
 	require.NoError(t, err)
-	defer sender.Stop(ctx)
+	defer func() {
+		if err := sender.Stop(ctx); err != nil {
+			t.Logf("Failed to stop sender in cleanup: %v", err)
+		}
+	}()
 
 	config2 := Config{
 		ProcessName:     "receiver",
@@ -167,12 +179,20 @@ func TestP2PNode_Publishing(t *testing.T) {
 
 	receiver, err := NewNode(ctx, logger, config2)
 	require.NoError(t, err)
-	defer receiver.Stop(ctx)
+	defer func() {
+		if err := receiver.Stop(ctx); err != nil {
+			t.Logf("Failed to stop receiver in cleanup: %v", err)
+		}
+	}()
 
 	// Set up stream handler on receiver
 	receivedMsg := make(chan []byte, 1)
 	streamHandler := func(stream network.Stream) {
-		defer stream.Close()
+		defer func() {
+			if err := stream.Close(); err != nil {
+				t.Logf("Failed to close stream: %v", err)
+			}
+		}()
 
 		buf := make([]byte, 1024)
 		var n int
@@ -235,11 +255,15 @@ func TestP2PNode_InitGossipSub(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.host.Close()
+	defer func() {
+		if err := node.host.Close(); err != nil { //nolint:govet // Intentional shadowing in defer
+			t.Logf("Failed to close host in cleanup: %v", err)
+		}
+	}()
 
 	t.Run("initGossipSub with topics", func(t *testing.T) {
 		topics := []string{"topic1", "topic2", "topic3"}
-		err := node.initGossipSub(ctx, topics)
+		err = node.initGossipSub(ctx, topics)
 		require.NoError(t, err)
 
 		assert.NotNil(t, node.pubSub)
@@ -253,9 +277,14 @@ func TestP2PNode_InitGossipSub(t *testing.T) {
 
 	t.Run("initGossipSub empty topics", func(t *testing.T) {
 		// Reset node
-		node2, err := NewNode(ctx, logger, config)
+		var node2 *Node
+		node2, err = NewNode(ctx, logger, config)
 		require.NoError(t, err)
-		defer node2.host.Close()
+		defer func() {
+			if err := node2.host.Close(); err != nil { //nolint:govet // Intentional shadowing in defer
+				t.Logf("Failed to close node2 host in cleanup: %v", err)
+			}
+		}()
 
 		err = node2.initGossipSub(ctx, []string{})
 		require.NoError(t, err)
@@ -277,7 +306,11 @@ func TestSubscribeToTopics(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.host.Close()
+	defer func() {
+		if err := node.host.Close(); err != nil { //nolint:govet // Intentional shadowing in defer
+			t.Logf("Failed to close host in cleanup: %v", err)
+		}
+	}()
 
 	// Create pubsub instance
 	ps, err := pubsub.NewGossipSub(ctx, node.host)
@@ -314,7 +347,11 @@ func TestP2PNode_ConcurrentPublishing(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.Stop(ctx)
+	defer func() {
+		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
+			t.Logf("Failed to stop node in cleanup: %v", err)
+		}
+	}()
 
 	err = node.Start(ctx, nil, "test-topic")
 	require.NoError(t, err)
@@ -369,7 +406,11 @@ func TestP2PNode_HandlerContextCancellation(t *testing.T) {
 
 	node, err := NewNode(context.Background(), logger, config)
 	require.NoError(t, err)
-	defer node.host.Close()
+	defer func() {
+		if err := node.host.Close(); err != nil { //nolint:govet // Intentional shadowing in defer
+			t.Logf("Failed to close host in cleanup: %v", err)
+		}
+	}()
 
 	// Create a context that we'll cancel
 	ctx, cancel := context.WithCancel(context.Background())

@@ -30,7 +30,11 @@ func BenchmarkP2PNode_Publish(b *testing.B) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(b, err)
-	defer node.Stop(ctx)
+	defer func(node *Node, ctx context.Context) {
+		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
+			b.Logf("Failed to stop node in cleanup: %v", err)
+		}
+	}(node, ctx)
 
 	err = node.Start(ctx, nil, "bench-topic")
 	require.NoError(b, err)
@@ -80,7 +84,11 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 
 	sender, err := NewNode(ctx, logger, config1)
 	require.NoError(b, err)
-	defer sender.Stop(ctx)
+	defer func(node *Node, ctx context.Context) {
+		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
+			b.Logf("Failed to stop sender node in cleanup: %v", err)
+		}
+	}(sender, ctx)
 
 	config2 := Config{
 		ProcessName:        "bench-receiver",
@@ -91,7 +99,11 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 
 	receiver, err := NewNode(ctx, logger, config2)
 	require.NoError(b, err)
-	defer receiver.Stop(ctx)
+	defer func(node *Node, ctx context.Context) {
+		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
+			b.Logf("Failed to stop receiver node in cleanup: %v", err)
+		}
+	}(receiver, ctx)
 
 	// Set up stream handler
 	streamHandler := func(stream network.Stream) {
@@ -99,7 +111,9 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 		for {
 			_, err = stream.Read(buf)
 			if err != nil {
-				err = stream.Close()
+				if closeErr := stream.Close(); closeErr != nil {
+					b.Logf("Failed to close stream: %v", closeErr)
+				}
 				return
 			}
 		}
@@ -157,7 +171,11 @@ func BenchmarkP2PNode_ConcurrentConnections(b *testing.B) {
 
 	central, err := NewNode(ctx, logger, centralConfig)
 	require.NoError(b, err)
-	defer central.Stop(ctx)
+	defer func(node *Node, ctx context.Context) {
+		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
+			b.Logf("Failed to stop central node in cleanup: %v", err)
+		}
+	}(central, ctx)
 
 	err = central.Start(ctx, nil)
 	require.NoError(b, err)
@@ -250,7 +268,11 @@ func BenchmarkP2PNode_MessageRouting(b *testing.B) {
 		require.NoError(b, err)
 
 		nodes[i] = node
-		defer node.Stop(ctx)
+		defer func(n *Node, ctx context.Context) {
+			if err := n.Stop(ctx); err != nil {
+				b.Logf("Failed to stop node %s in cleanup: %v", n.GetProcessName(), err)
+			}
+		}(node, ctx)
 	}
 
 	// Set up message handlers
@@ -335,7 +357,11 @@ func BenchmarkP2PNode_PeerManagement(b *testing.B) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(b, err)
-	defer node.host.Close()
+	defer func() {
+		if err := node.host.Close(); err != nil {
+			b.Logf("Failed to close host in cleanup: %v", err)
+		}
+	}()
 
 	// Pre-populate with peer data
 	numPeers := 1000

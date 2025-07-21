@@ -189,8 +189,9 @@ func TestP2PNode_StartStop(t *testing.T) {
 		require.NoError(t, err)
 
 		streamHandler := func(stream network.Stream) {
-			err = stream.Close()
-			require.NoError(t, err)
+			if err := stream.Close(); err != nil { //nolint:govet // New err variable in closure scope
+				t.Errorf("Failed to close stream: %v", err)
+			}
 		}
 
 		err = node.Start(ctx, streamHandler, "test-topic")

@@ -34,7 +34,11 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 
 	node1, err := NewNode(ctx, logger, config1)
 	require.NoError(t, err)
-	defer node1.Stop(ctx)
+	defer func() {
+		if err := node1.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
+			t.Logf("Failed to stop node1 in cleanup: %v", err)
+		}
+	}()
 
 	// Get node1's address for static peer config
 	node1Addr := fmt.Sprintf("%s/p2p/%s", node1.host.Addrs()[0], node1.host.ID())
@@ -50,7 +54,11 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 
 	node2, err := NewNode(ctx, logger, config2)
 	require.NoError(t, err)
-	defer node2.Stop(ctx)
+	defer func() {
+		if err := node2.Stop(ctx); err != nil {
+			t.Logf("Failed to stop node2 in cleanup: %v", err)
+		}
+	}()
 
 	t.Run("connectToStaticPeers", func(t *testing.T) {
 		// Test connection to static peers
@@ -92,7 +100,11 @@ func TestP2PNode_ShouldSkipPeer(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.host.Close()
+	defer func() {
+		if err := node.host.Close(); err != nil {
+			t.Logf("Failed to close host in cleanup: %v", err)
+		}
+	}()
 
 	selfID := node.host.ID()
 	otherID, _ := peer.Decode("12D3KooWGRYZDHBembyGJQqQ6WgLqJWYNjnECJwGBnCg8vbCeo8F")
@@ -158,7 +170,11 @@ func TestP2PNode_ShouldSkipBasedOnErrors(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.host.Close()
+	defer func() {
+		if err := node.host.Close(); err != nil {
+			t.Logf("Failed to close host in cleanup: %v", err)
+		}
+	}()
 
 	peerID, _ := peer.Decode("12D3KooWGRYZDHBembyGJQqQ6WgLqJWYNjnECJwGBnCg8vbCeo8F")
 
@@ -232,7 +248,11 @@ func TestP2PNode_ShouldSkipNoGoodAddresses(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.host.Close()
+	defer func() {
+		if err := node.host.Close(); err != nil {
+			t.Logf("Failed to close host in cleanup: %v", err)
+		}
+	}()
 
 	peerID, _ := peer.Decode("12D3KooWGRYZDHBembyGJQqQ6WgLqJWYNjnECJwGBnCg8vbCeo8F")
 
@@ -397,7 +417,11 @@ func TestP2PNode_PrivateNetwork(t *testing.T) {
 		host, err := setUpPrivateNetwork(logger, config, pk)
 		require.NoError(t, err)
 		require.NotNil(t, host)
-		defer host.Close()
+		defer func() {
+			if err := host.Close(); err != nil {
+				t.Logf("Failed to close host in cleanup: %v", err)
+			}
+		}()
 
 		// Verify host is running
 		assert.NotEmpty(t, host.ID())
@@ -419,7 +443,11 @@ func TestP2PNode_PrivateNetwork(t *testing.T) {
 		host, err := setUpPrivateNetwork(logger, config, pk)
 		require.NoError(t, err)
 		require.NotNil(t, host)
-		defer host.Close()
+		defer func() {
+			if err := host.Close(); err != nil {
+				t.Logf("Failed to close host in cleanup: %v", err)
+			}
+		}()
 	})
 
 	t.Run("setUpPrivateNetwork invalid shared key", func(t *testing.T) {
@@ -453,7 +481,11 @@ func TestP2PNode_InitDHT(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.host.Close()
+	defer func() {
+		if err := node.host.Close(); err != nil {
+			t.Logf("Failed to close host in cleanup: %v", err)
+		}
+	}()
 
 	t.Run("initDHT success", func(t *testing.T) {
 		// Use a short timeout context to avoid waiting for bootstrap
@@ -486,7 +518,11 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 
 		node, err := NewNode(ctx, logger, config)
 		require.NoError(t, err)
-		defer node.host.Close()
+		defer func() {
+			if err := node.host.Close(); err != nil { //nolint:govet // Intentional shadowing in defer
+				t.Logf("Failed to close host in cleanup: %v", err)
+			}
+		}()
 
 		dht, err := node.initPrivateDHT(ctx, node.host)
 		require.Error(t, err)
@@ -505,7 +541,11 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 
 		node, err := NewNode(ctx, logger, config)
 		require.NoError(t, err)
-		defer node.host.Close()
+		defer func() {
+			if err := node.host.Close(); err != nil { //nolint:govet // Intentional shadowing in defer
+				t.Logf("Failed to close host in cleanup: %v", err)
+			}
+		}()
 
 		dht, err := node.initPrivateDHT(ctx, node.host)
 		require.Error(t, err)
@@ -524,7 +564,11 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 
 		node, err := NewNode(ctx, logger, config)
 		require.NoError(t, err)
-		defer node.host.Close()
+		defer func() {
+			if err := node.host.Close(); err != nil { //nolint:govet // Intentional shadowing in defer
+				t.Logf("Failed to close host in cleanup: %v", err)
+			}
+		}()
 
 		dht, err := node.initPrivateDHT(ctx, node.host)
 		require.Error(t, err)
