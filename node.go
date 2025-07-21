@@ -115,9 +115,9 @@ func NewP2PNode(ctx context.Context, logger *logrus.Logger, config Config) (*Nod
 				// If no public addresses are set, let's attempt to grab it publicly
 				// Ignore errors because we don't care if we can't find it
 				var ifconfig string
-				ifconfig, err = alertP2P.GetPublicIP(context.Background())
-				if err != nil {
-					logger.Debugf("[Node] error getting public IP: %v", err)
+				ifconfig, localErr := alertP2P.GetPublicIP(context.Background())
+				if localErr != nil {
+					logger.Debugf("[Node] error getting public IP: %v", localErr)
 				}
 
 				if len(ifconfig) == 0 {
@@ -125,9 +125,9 @@ func NewP2PNode(ctx context.Context, logger *logrus.Logger, config Config) (*Nod
 				}
 
 				var addr multiaddr.Multiaddr
-				addr, err = multiaddr.NewMultiaddr(fmt.Sprintf(multiAddrIPTemplate, ifconfig, config.Port))
-				if err != nil {
-					logger.Debugf("[Node] error creating public multiaddr: %v", err)
+				addr, localErr = multiaddr.NewMultiaddr(fmt.Sprintf(multiAddrIPTemplate, ifconfig, config.Port))
+				if localErr != nil {
+					logger.Debugf("[Node] error creating public multiaddr: %v", localErr)
 				}
 
 				if addr != nil {
