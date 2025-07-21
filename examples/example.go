@@ -25,7 +25,7 @@ func main() {
 	}
 
 	// Create P2P node
-	node, err := p2p.NewP2PNode(ctx, logger, config)
+	node, err := p2p.NewNode(ctx, logger, config)
 	if err != nil {
 		log.Fatalf("Failed to create P2P node: %v", err)
 	}

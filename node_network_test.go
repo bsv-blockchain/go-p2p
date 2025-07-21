@@ -32,7 +32,7 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 		Port:               3111, // Random port
 	}
 
-	node1, err := NewP2PNode(ctx, logger, config1)
+	node1, err := NewNode(ctx, logger, config1)
 	require.NoError(t, err)
 	defer node1.Stop(ctx)
 
@@ -48,7 +48,7 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 		StaticPeers:        []string{node1Addr},
 	}
 
-	node2, err := NewP2PNode(ctx, logger, config2)
+	node2, err := NewNode(ctx, logger, config2)
 	require.NoError(t, err)
 	defer node2.Stop(ctx)
 
@@ -90,7 +90,7 @@ func TestP2PNode_ShouldSkipPeer(t *testing.T) {
 		OptimiseRetries: false,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.host.Close()
 
@@ -156,7 +156,7 @@ func TestP2PNode_ShouldSkipBasedOnErrors(t *testing.T) {
 		OptimiseRetries: true,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.host.Close()
 
@@ -230,7 +230,7 @@ func TestP2PNode_ShouldSkipNoGoodAddresses(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.host.Close()
 
@@ -300,7 +300,7 @@ func TestP2PNode_AttemptConnection(t *testing.T) {
 		Port:               3111,
 	}
 
-	node1, err := NewP2PNode(ctx, logger, config1)
+	node1, err := NewNode(ctx, logger, config1)
 	require.NoError(t, err)
 	defer node1.host.Close()
 
@@ -311,7 +311,7 @@ func TestP2PNode_AttemptConnection(t *testing.T) {
 		Port:               3112,
 	}
 
-	node2, err := NewP2PNode(ctx, logger, config2)
+	node2, err := NewNode(ctx, logger, config2)
 	require.NoError(t, err)
 	defer node2.host.Close()
 
@@ -451,7 +451,7 @@ func TestP2PNode_InitDHT(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.host.Close()
 
@@ -484,7 +484,7 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 			DHTProtocolID:      "/test/dht/1.0.0",
 		}
 
-		node, err := NewP2PNode(ctx, logger, config)
+		node, err := NewNode(ctx, logger, config)
 		require.NoError(t, err)
 		defer node.host.Close()
 
@@ -503,7 +503,7 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 			DHTProtocolID:      "/test/dht/1.0.0",
 		}
 
-		node, err := NewP2PNode(ctx, logger, config)
+		node, err := NewNode(ctx, logger, config)
 		require.NoError(t, err)
 		defer node.host.Close()
 
@@ -522,7 +522,7 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 			DHTProtocolID:      "",
 		}
 
-		node, err := NewP2PNode(ctx, logger, config)
+		node, err := NewNode(ctx, logger, config)
 		require.NoError(t, err)
 		defer node.host.Close()
 

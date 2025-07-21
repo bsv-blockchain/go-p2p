@@ -111,7 +111,7 @@ func TestNewP2PNode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			node, err := NewP2PNode(ctx, logger, tt.config)
+			node, err := NewNode(ctx, logger, tt.config)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -157,7 +157,7 @@ func TestP2PNode_StartStop(t *testing.T) {
 			Port:            0,
 		}
 
-		node, err := NewP2PNode(ctx, logger, config)
+		node, err := NewNode(ctx, logger, config)
 		require.NoError(t, err)
 		require.NotNil(t, node)
 
@@ -185,7 +185,7 @@ func TestP2PNode_StartStop(t *testing.T) {
 			Port:            0,
 		}
 
-		node, err := NewP2PNode(ctx, logger, config)
+		node, err := NewNode(ctx, logger, config)
 		require.NoError(t, err)
 
 		streamHandler := func(stream network.Stream) {
@@ -213,7 +213,7 @@ func TestP2PNode_StartStop(t *testing.T) {
 			Port:            0,
 		}
 
-		node, err := NewP2PNode(ctx, logger, config)
+		node, err := NewNode(ctx, logger, config)
 		require.NoError(t, err)
 
 		topics := []string{"topic1", "topic2", "topic3"}
@@ -242,7 +242,7 @@ func TestP2PNode_BasicGetters(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.host.Close()
 
@@ -286,7 +286,7 @@ func TestP2PNode_Metrics(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.host.Close()
 
@@ -309,7 +309,7 @@ func TestP2PNode_PeerManagement(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.host.Close()
 
@@ -372,7 +372,7 @@ func TestP2PNode_Callbacks(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.host.Close()
 
@@ -400,7 +400,7 @@ func TestP2PNode_Callbacks(t *testing.T) {
 
 	t.Run("callback not set", func(t *testing.T) {
 		// Create new node without callback
-		node2, err := NewP2PNode(ctx, logger, config)
+		node2, err := NewNode(ctx, logger, config)
 		require.NoError(t, err)
 		defer node2.host.Close()
 
@@ -423,7 +423,7 @@ func TestP2PNode_ThreadSafety(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.host.Close()
 

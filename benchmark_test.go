@@ -28,7 +28,7 @@ func BenchmarkP2PNode_Publish(b *testing.B) {
 		Port:               3111,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(b, err)
 	defer node.Stop(ctx)
 
@@ -78,7 +78,7 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 		Port:               3111,
 	}
 
-	sender, err := NewP2PNode(ctx, logger, config1)
+	sender, err := NewNode(ctx, logger, config1)
 	require.NoError(b, err)
 	defer sender.Stop(ctx)
 
@@ -89,7 +89,7 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 		Port:               3112,
 	}
 
-	receiver, err := NewP2PNode(ctx, logger, config2)
+	receiver, err := NewNode(ctx, logger, config2)
 	require.NoError(b, err)
 	defer receiver.Stop(ctx)
 
@@ -155,7 +155,7 @@ func BenchmarkP2PNode_ConcurrentConnections(b *testing.B) {
 		Port:               3111,
 	}
 
-	central, err := NewP2PNode(ctx, logger, centralConfig)
+	central, err := NewNode(ctx, logger, centralConfig)
 	require.NoError(b, err)
 	defer central.Stop(ctx)
 
@@ -188,7 +188,7 @@ func BenchmarkP2PNode_ConcurrentConnections(b *testing.B) {
 						}
 
 						var node *Node
-						node, err = NewP2PNode(ctx, logger, config)
+						node, err = NewNode(ctx, logger, config)
 						if err != nil {
 							b.Error(err)
 							return
@@ -243,7 +243,7 @@ func BenchmarkP2PNode_MessageRouting(b *testing.B) {
 			}
 		}
 
-		node, err := NewP2PNode(ctx, logger, config)
+		node, err := NewNode(ctx, logger, config)
 		require.NoError(b, err)
 
 		err = node.Start(ctx, nil, "bench-routing")
@@ -333,7 +333,7 @@ func BenchmarkP2PNode_PeerManagement(b *testing.B) {
 		Port:               3111,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(b, err)
 	defer node.host.Close()
 
@@ -429,7 +429,7 @@ func BenchmarkP2PNode_MemoryAllocation(b *testing.B) {
 	logger := logrus.New()
 	logger.SetLevel(logrus.ErrorLevel)
 
-	b.Run("NewP2PNode", func(b *testing.B) {
+	b.Run("NewNode", func(b *testing.B) {
 		ctx := context.Background()
 
 		b.ResetTimer()
@@ -441,7 +441,7 @@ func BenchmarkP2PNode_MemoryAllocation(b *testing.B) {
 				Port:               3111 + i,
 			}
 
-			node, err := NewP2PNode(ctx, logger, config)
+			node, err := NewNode(ctx, logger, config)
 			if err != nil {
 				b.Fatal(err)
 			}
