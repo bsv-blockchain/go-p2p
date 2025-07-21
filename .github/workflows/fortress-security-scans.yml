@@ -254,7 +254,7 @@ jobs:
           echo "🔍 Checking repository security conditions..."
           echo "PR Head Repo: ${{ github.event.pull_request.head.repo.full_name }}"
           echo "Base Repo: ${{ github.repository }}"
-          
+
           if [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${{ github.repository }}" ]]; then
             echo "✅ Same repository - security scans allowed"
             echo "is_same_repo=true" >> $GITHUB_OUTPUT
