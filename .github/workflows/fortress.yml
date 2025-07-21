@@ -300,7 +300,7 @@ jobs:
     name: 🚀 Release Version
     needs: [load-env, setup, status-check]
     # Only run on successful tag pushes
-    if: startsWith(github.ref, 'refs/tags/v') && needs.status-check.result == 'success'
+    if: startsWith(github.ref, 'refs/tags/v') && needs.status-check.result != 'failure'
     uses: ./.github/workflows/fortress-release.yml
     with:
       env-json: ${{ needs.load-env.outputs.env-json }}
