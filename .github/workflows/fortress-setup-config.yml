@@ -69,6 +69,15 @@ on:
       security-scans-enabled:
         description: "Whether security scans are enabled"
         value: ${{ jobs.setup-config.outputs.security-scans-enabled }}
+      nancy-enabled:
+        description: "Whether Nancy dependency checks are enabled"
+        value: ${{ jobs.setup-config.outputs.nancy-enabled }}
+      govulncheck-enabled:
+        description: "Whether govulncheck vulnerability scanning is enabled"
+        value: ${{ jobs.setup-config.outputs.govulncheck-enabled }}
+      gitleaks-enabled:
+        description: "Whether Gitleaks secret scanning is enabled"
+        value: ${{ jobs.setup-config.outputs.gitleaks-enabled }}
       start-epoch:
         description: "Workflow start epoch time"
         value: ${{ jobs.setup-config.outputs.start-epoch }}
@@ -110,6 +119,9 @@ jobs:
       race-detection-enabled: ${{ steps.config.outputs.race-detection-enabled }}
       secondary-runner: ${{ steps.config.outputs.secondary-runner }}
       security-scans-enabled: ${{ steps.config.outputs.security-scans-enabled }}
+      nancy-enabled: ${{ steps.config.outputs.nancy-enabled }}
+      govulncheck-enabled: ${{ steps.config.outputs.govulncheck-enabled }}
+      gitleaks-enabled: ${{ steps.config.outputs.gitleaks-enabled }}
       start-epoch: ${{ steps.timer.outputs.start-epoch }}
       start-time: ${{ steps.timer.outputs.start-time }}
       static-analysis-enabled: ${{ steps.config.outputs.static-analysis-enabled }}
@@ -284,7 +296,15 @@ jobs:
           echo "go-lint-enabled=${{ env.ENABLE_GO_LINT }}" >> $GITHUB_OUTPUT
           echo "yaml-lint-enabled=${{ env.ENABLE_YAML_LINT }}" >> $GITHUB_OUTPUT
           echo "race-detection-enabled=${{ env.ENABLE_RACE_DETECTION }}" >> $GITHUB_OUTPUT
-          echo "security-scans-enabled=${{ env.ENABLE_SECURITY_SCANS }}" >> $GITHUB_OUTPUT
+          # Security scans - enable if any individual tool is enabled
+          if [[ "${{ env.ENABLE_SECURITY_SCAN_NANCY }}" == "true" || "${{ env.ENABLE_SECURITY_SCAN_GOVULNCHECK }}" == "true" || "${{ env.ENABLE_SECURITY_SCAN_GITLEAKS }}" == "true" ]]; then
+            echo "security-scans-enabled=true" >> $GITHUB_OUTPUT
+          else
+            echo "security-scans-enabled=false" >> $GITHUB_OUTPUT
+          fi
+          echo "nancy-enabled=${{ env.ENABLE_SECURITY_SCAN_NANCY }}" >> $GITHUB_OUTPUT
+          echo "govulncheck-enabled=${{ env.ENABLE_SECURITY_SCAN_GOVULNCHECK }}" >> $GITHUB_OUTPUT
+          echo "gitleaks-enabled=${{ env.ENABLE_SECURITY_SCAN_GITLEAKS }}" >> $GITHUB_OUTPUT
           echo "static-analysis-enabled=${{ env.ENABLE_STATIC_ANALYSIS }}" >> $GITHUB_OUTPUT
           echo "fuzz-testing-enabled=${{ env.ENABLE_FUZZ_TESTING }}" >> $GITHUB_OUTPUT
 
@@ -353,7 +373,9 @@ jobs:
           echo "| **Go Linting** | $([ "${{ env.ENABLE_GO_LINT }}" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled") | golangci-lint will $([ "${{ env.ENABLE_GO_LINT }}" == "true" ] && echo "analyze code quality" || echo "be skipped") |" >> $GITHUB_STEP_SUMMARY
           echo "| **YAML Linting** | $([ "${{ env.ENABLE_YAML_LINT }}" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled") | prettier will $([ "${{ env.ENABLE_YAML_LINT }}" == "true" ] && echo "validate YAML formatting" || echo "be skipped") |" >> $GITHUB_STEP_SUMMARY
           echo "| **Race Detection** | $([ "${{ env.ENABLE_RACE_DETECTION }}" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled") | Tests will $([ "${{ env.ENABLE_RACE_DETECTION }}" == "true" ] && echo "run with -race flag" || echo "run without race detection") |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Security Scans** | $([ "${{ env.ENABLE_SECURITY_SCANS }}" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled") | Security tools will $([ "${{ env.ENABLE_SECURITY_SCANS }}" == "true" ] && echo "scan for vulnerabilities" || echo "be skipped") |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Nancy (Dependency Checks)** | $([ "${{ env.ENABLE_SECURITY_SCAN_NANCY }}" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled") | Nancy will $([ "${{ env.ENABLE_SECURITY_SCAN_NANCY }}" == "true" ] && echo "scan dependencies for vulnerabilities" || echo "be skipped") |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Govulncheck (Go Vuln Scan)** | $([ "${{ env.ENABLE_SECURITY_SCAN_GOVULNCHECK }}" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled") | govulncheck will $([ "${{ env.ENABLE_SECURITY_SCAN_GOVULNCHECK }}" == "true" ] && echo "scan for Go vulnerabilities" || echo "be skipped") |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Gitleaks (Secret Scan)** | $([ "${{ env.ENABLE_SECURITY_SCAN_GITLEAKS }}" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled") | Gitleaks will $([ "${{ env.ENABLE_SECURITY_SCAN_GITLEAKS }}" == "true" ] && echo "scan for leaked secrets" || echo "be skipped") |" >> $GITHUB_STEP_SUMMARY
           echo "| **Static Analysis** | $([ "${{ env.ENABLE_STATIC_ANALYSIS }}" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled") | Static analysis will $([ "${{ env.ENABLE_STATIC_ANALYSIS }}" == "true" ] && echo "check for code issues" || echo "be skipped") |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 

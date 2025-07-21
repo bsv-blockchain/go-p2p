@@ -43,6 +43,7 @@ jobs:
   ask-nancy:
     name: 🛡️ Ask Nancy (Dependency Checks)
     runs-on: ${{ inputs.primary-runner }}
+    if: fromJson(inputs.env-json).ENABLE_SECURITY_SCAN_NANCY == 'true'
     steps:
       # ————————————————————————————————————————————————————————————————
       # Parse environment variables
@@ -124,6 +125,7 @@ jobs:
   govulncheck:
     name: 🔐 Run govulncheck (Vulnerability Scan)
     runs-on: ${{ inputs.primary-runner }}
+    if: fromJson(inputs.env-json).ENABLE_SECURITY_SCAN_GOVULNCHECK == 'true'
     steps:
       # ————————————————————————————————————————————————————————————————
       # Parse environment variables
@@ -229,7 +231,7 @@ jobs:
   gitleaks:
     name: 🕵️ Run Gitleaks (Secret Scan)
     runs-on: ${{ inputs.primary-runner }}
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: fromJson(inputs.env-json).ENABLE_SECURITY_SCAN_GITLEAKS == 'true' && github.event.pull_request.head.repo.full_name == github.repository
     steps:
       # ————————————————————————————————————————————————————————————————
       # Parse environment variables
