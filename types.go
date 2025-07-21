@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/peer"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -33,7 +33,7 @@ type Node struct {
 	host              host.Host                      // libp2p host for network communication
 	pubSub            *pubsub.PubSub                 // Publish-subscribe system for topic-based messaging
 	topics            map[string]*pubsub.Topic       // Map of topic names to topic objects
-	logger            logrus.FieldLogger             // Logger for P2P operations
+	logger            Logger                         // Logger for P2P operations
 	bitcoinProtocolID string                         // Protocol identifier for Bitcoin-specific streams
 	handlerByTopic    map[string]Handler             // Map of topic handlers for message processing
 	startTime         time.Time                      // Time when the node was started
@@ -65,16 +65,25 @@ type Handler func(ctx context.Context, msg []byte, from string)
 // It encapsulates all settings needed to establish and maintain
 // a functional peer-to-peer network presence.
 type Config struct {
-	ProcessName        string   // Identifier for this node in logs and metrics
-	BootstrapAddresses []string // Initial peer addresses to connect to for network discovery
-	ListenAddresses    []string // Network addresses to listen on for incoming connections
-	AdvertiseAddresses []string // Addresses to advertise to other peers (may differ from listen addresses)
-	Port               int      // Port number for P2P communication
-	DHTProtocolID      string   // Protocol ID for the DHT used by this node
-	PrivateKey         string   // Node's private key for secure communication
-	SharedKey          string   // Shared key for private network communication
-	UsePrivateDHT      bool     // Whether to use a private DHT instead of the public IPFS DHT
-	OptimiseRetries    bool     // Whether to optimize connection retry behavior
-	Advertise          bool     // Whether to advertise this node's presence on the network
-	StaticPeers        []string // List of peer addresses to always attempt to connect to
+	ProcessName        string          // Identifier for this node in logs and metrics
+	BootstrapAddresses []string        // Initial peer addresses to connect to for network discovery
+	ListenAddresses    []string        // Network addresses to listen on for incoming connections
+	AdvertiseAddresses []string        // Addresses to advertise to other peers (may differ from listen addresses)
+	Port               int             // Port number for P2P communication
+	DHTProtocolID      string          // Protocol ID for the DHT used by this node
+	PrivateKey         *crypto.PrivKey // Node's private key for secure communication
+	SharedKey          string          // Shared key for private network communication
+	UsePrivateDHT      bool            // Whether to use a private DHT instead of the public IPFS DHT
+	OptimiseRetries    bool            // Whether to optimize connection retry behavior
+	Advertise          bool            // Whether to advertise this node's presence on the network
+	StaticPeers        []string        // List of peer addresses to always attempt to connect to
+}
+
+// Logger defines the interface for logging within the P2P node.
+type Logger interface {
+	Debugf(format string, args ...interface{})
+	Infof(format string, args ...interface{})
+	Warnf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+	Fatalf(format string, args ...interface{})
 }

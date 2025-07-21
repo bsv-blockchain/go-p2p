@@ -14,8 +14,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	alertP2P "github.com/bitcoin-sv/alert-system/app/p2p"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -45,34 +43,21 @@ import (
 //   - config: P2P-specific configuration parameters defining network behavior
 //
 // Returns a fully initialized P2P node ready for starting, or an error if initialization fails.
-func NewNode(ctx context.Context, logger logrus.FieldLogger, config Config) (*Node, error) {
+func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 	logger.Infof("[Node] Creating node")
 
 	var (
-		pk  *crypto.PrivKey // Private key for the node
 		err error
+		h   host.Host // the libp2p host for the node
 	)
 
-	// If no private key is provided in the configuration, attempt to read or generate one
-	if config.PrivateKey == "" {
-		// Attempt to generate a new private key
-		pk, err = generatePrivateKey(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("[Node] error generating private key: %w", err)
-		}
-	} else {
-		// If a private key is provided, decode it
-		pk, err = decodeHexEd25519PrivateKey(config.PrivateKey)
-		if err != nil {
-			return nil, fmt.Errorf("[Node] error decoding private key: %w", err)
-		}
+	if config.PrivateKey == nil {
+		config.PrivateKey, err = generatePrivateKey(ctx)
 	}
-
-	var h host.Host // The libp2p host for the node
-
+	
 	// If a private DHT is configured, set up the private network
 	if config.UsePrivateDHT {
-		h, err = setUpPrivateNetwork(logger, config, pk)
+		h, err = setUpPrivateNetwork(logger, config)
 		if err != nil {
 			return nil, fmt.Errorf("[Node] error setting up private network: %w", err)
 		}
@@ -85,7 +70,7 @@ func NewNode(ctx context.Context, logger logrus.FieldLogger, config Config) (*No
 
 		opts := []libp2p.Option{
 			libp2p.ListenAddrStrings(listenMultiAddresses...),
-			libp2p.Identity(*pk),
+			libp2p.Identity(*config.PrivateKey),
 		}
 
 		// If advertise addresses are specified, add them to the options
@@ -202,7 +187,7 @@ func NewNode(ctx context.Context, logger logrus.FieldLogger, config Config) (*No
 // Returns:
 //   - A configured libp2p host ready for private network operation
 //   - Error if the shared key is invalid or host creation fails
-func setUpPrivateNetwork(logger logrus.FieldLogger, config Config, pk *crypto.PrivKey) (host.Host, error) {
+func setUpPrivateNetwork(logger Logger, config Config) (host.Host, error) {
 	var h host.Host
 
 	s := ""
@@ -224,7 +209,7 @@ func setUpPrivateNetwork(logger logrus.FieldLogger, config Config, pk *crypto.Pr
 	// Set up libp2p options
 	opts := []libp2p.Option{
 		libp2p.ListenAddrStrings(listenMultiAddresses...),
-		libp2p.Identity(*pk),
+		libp2p.Identity(*config.PrivateKey),
 		libp2p.PrivateNetwork(psk),
 	}
 
@@ -246,7 +231,7 @@ func setUpPrivateNetwork(logger logrus.FieldLogger, config Config, pk *crypto.Pr
 
 // buildAdvertiseMultiAddrs constructs multiaddrs from host strings with optional ports.
 // Logs warnings via fmt.Printf for invalid addresses.
-func buildAdvertiseMultiAddrs(log logrus.FieldLogger, addrs []string, defaultPort int) []multiaddr.Multiaddr {
+func buildAdvertiseMultiAddrs(log Logger, addrs []string, defaultPort int) []multiaddr.Multiaddr {
 	result := make([]multiaddr.Multiaddr, 0, len(addrs))
 
 	for _, addr := range addrs {
