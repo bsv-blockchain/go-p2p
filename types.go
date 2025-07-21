@@ -33,7 +33,7 @@ type Node struct {
 	host              host.Host                      // libp2p host for network communication
 	pubSub            *pubsub.PubSub                 // Publish-subscribe system for topic-based messaging
 	topics            map[string]*pubsub.Topic       // Map of topic names to topic objects
-	logger            *logrus.Logger                 // Logger for P2P operations
+	logger            logrus.FieldLogger             // Logger for P2P operations
 	bitcoinProtocolID string                         // Protocol identifier for Bitcoin-specific streams
 	handlerByTopic    map[string]Handler             // Map of topic handlers for message processing
 	startTime         time.Time                      // Time when the node was started

@@ -45,7 +45,7 @@ import (
 //   - config: P2P-specific configuration parameters defining network behavior
 //
 // Returns a fully initialized P2P node ready for starting, or an error if initialization fails.
-func NewNode(ctx context.Context, logger *logrus.Logger, config Config) (*Node, error) {
+func NewNode(ctx context.Context, logger logrus.FieldLogger, config Config) (*Node, error) {
 	logger.Infof("[Node] Creating node")
 
 	var (
@@ -202,7 +202,7 @@ func NewNode(ctx context.Context, logger *logrus.Logger, config Config) (*Node, 
 // Returns:
 //   - A configured libp2p host ready for private network operation
 //   - Error if the shared key is invalid or host creation fails
-func setUpPrivateNetwork(logger *logrus.Logger, config Config, pk *crypto.PrivKey) (host.Host, error) {
+func setUpPrivateNetwork(logger logrus.FieldLogger, config Config, pk *crypto.PrivKey) (host.Host, error) {
 	var h host.Host
 
 	s := ""
@@ -246,7 +246,7 @@ func setUpPrivateNetwork(logger *logrus.Logger, config Config, pk *crypto.PrivKe
 
 // buildAdvertiseMultiAddrs constructs multiaddrs from host strings with optional ports.
 // Logs warnings via fmt.Printf for invalid addresses.
-func buildAdvertiseMultiAddrs(log *logrus.Logger, addrs []string, defaultPort int) []multiaddr.Multiaddr {
+func buildAdvertiseMultiAddrs(log logrus.FieldLogger, addrs []string, defaultPort int) []multiaddr.Multiaddr {
 	result := make([]multiaddr.Multiaddr, 0, len(addrs))
 
 	for _, addr := range addrs {
