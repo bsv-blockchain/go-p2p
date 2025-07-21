@@ -21,7 +21,7 @@ concurrency:
 # Declare default permissions as read-only.
 permissions:
   contents: read
-  security-events: read  # For scorecard analysis
+  security-events: read # For scorecard analysis
 
 jobs:
   analysis:
