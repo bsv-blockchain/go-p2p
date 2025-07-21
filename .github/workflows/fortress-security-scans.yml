@@ -17,6 +17,21 @@ on:
         description: "JSON string of environment variables"
         required: true
         type: string
+      enable-nancy:
+        description: "Enable Nancy security scan"
+        required: false
+        type: boolean
+        default: true
+      enable-govulncheck:
+        description: "Enable govulncheck security scan"
+        required: false
+        type: boolean
+        default: true
+      enable-gitleaks:
+        description: "Enable Gitleaks security scan"
+        required: false
+        type: boolean
+        default: true
       primary-runner:
         description: "Primary runner OS"
         required: true
@@ -43,7 +58,7 @@ jobs:
   ask-nancy:
     name: 🛡️ Ask Nancy (Dependency Checks)
     runs-on: ${{ inputs.primary-runner }}
-    if: fromJSON(inputs.env-json).ENABLE_SECURITY_SCAN_NANCY == 'true'
+    if: ${{ inputs.enable-nancy }}
     steps:
       # ————————————————————————————————————————————————————————————————
       # Parse environment variables
@@ -125,7 +140,7 @@ jobs:
   govulncheck:
     name: 🔐 Run govulncheck (Vulnerability Scan)
     runs-on: ${{ inputs.primary-runner }}
-    if: fromJSON(inputs.env-json).ENABLE_SECURITY_SCAN_GOVULNCHECK == 'true'
+    if: ${{ inputs.enable-govulncheck }}
     steps:
       # ————————————————————————————————————————————————————————————————
       # Parse environment variables
@@ -231,7 +246,7 @@ jobs:
   gitleaks:
     name: 🕵️ Run Gitleaks (Secret Scan)
     runs-on: ${{ inputs.primary-runner }}
-    if: fromJSON(inputs.env-json).ENABLE_SECURITY_SCAN_GITLEAKS == 'true'
+    if: ${{ inputs.enable-gitleaks }}
     steps:
       # ————————————————————————————————————————————————————————————————
       # Parse environment variables
@@ -252,14 +267,22 @@ jobs:
         id: repo-check
         run: |
           echo "🔍 Checking repository security conditions..."
-          echo "PR Head Repo: ${{ github.event.pull_request.head.repo.full_name }}"
-          echo "Base Repo: ${{ github.repository }}"
-
-          if [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${{ github.repository }}" ]]; then
-            echo "✅ Same repository - security scans allowed"
+          echo "Event Name: ${{ github.event_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Head Ref: ${{ github.head_ref }}"
+          
+          # For workflow_call, we typically trust the calling workflow from the same repo
+          # For pull_request events, check if head repo matches base repo
+          if [[ "${{ github.event_name }}" == "workflow_call" ]]; then
+            echo "✅ Workflow call from same repository - security scans allowed"
+            echo "is_same_repo=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${{ github.repository }}" ]] || [[ -z "${{ github.event.pull_request.head.repo.full_name }}" ]]; then
+            echo "✅ Same repository or push event - security scans allowed"
             echo "is_same_repo=true" >> $GITHUB_OUTPUT
           else
             echo "⚠️  Fork detected - skipping secret-sensitive scans for security"
+            echo "PR Head Repo: ${{ github.event.pull_request.head.repo.full_name }}"
             echo "is_same_repo=false" >> $GITHUB_OUTPUT
           fi
 
@@ -305,7 +328,7 @@ jobs:
           echo "| 🔒 Security Details | ⚠️  Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
           echo "| **Tool** | Gitleaks |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Fork Detected** | ${{ github.event.pull_request.head.repo.full_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Fork Detected** | ${{ github.event.pull_request.head.repo.full_name || 'N/A (not a PR event)' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Base Repository** | ${{ github.repository }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Result** | ⚠️  Skipped for security (fork cannot access secrets) |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

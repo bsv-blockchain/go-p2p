@@ -155,6 +155,9 @@ jobs:
     uses: ./.github/workflows/fortress-security-scans.yml
     with:
       env-json: ${{ needs.load-env.outputs.env-json }}
+      enable-nancy: ${{ fromJSON(needs.load-env.outputs.env-json).ENABLE_SECURITY_SCAN_NANCY == 'true' }}
+      enable-govulncheck: ${{ fromJSON(needs.load-env.outputs.env-json).ENABLE_SECURITY_SCAN_GOVULNCHECK == 'true' }}
+      enable-gitleaks: ${{ fromJSON(needs.load-env.outputs.env-json).ENABLE_SECURITY_SCAN_GITLEAKS == 'true' }}
       go-primary-version: ${{ needs.setup.outputs.go-primary-version }}
       primary-runner: ${{ needs.setup.outputs.primary-runner }}
     secrets:
