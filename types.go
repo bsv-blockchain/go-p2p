@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/peer"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -65,18 +64,18 @@ type Handler func(ctx context.Context, msg []byte, from string)
 // It encapsulates all settings needed to establish and maintain
 // a functional peer-to-peer network presence.
 type Config struct {
-	ProcessName        string          // Identifier for this node in logs and metrics
-	BootstrapAddresses []string        // Initial peer addresses to connect to for network discovery
-	ListenAddresses    []string        // Network addresses to listen on for incoming connections
-	AdvertiseAddresses []string        // Addresses to advertise to other peers (may differ from listen addresses)
-	Port               int             // Port number for P2P communication
-	DHTProtocolID      string          // Protocol ID for the DHT used by this node
-	PrivateKey         *crypto.PrivKey // Node's private key for secure communication
-	SharedKey          string          // Shared key for private network communication
-	UsePrivateDHT      bool            // Whether to use a private DHT instead of the public IPFS DHT
-	OptimiseRetries    bool            // Whether to optimize connection retry behavior
-	Advertise          bool            // Whether to advertise this node's presence on the network
-	StaticPeers        []string        // List of peer addresses to always attempt to connect to
+	ProcessName        string   // Identifier for this node in logs and metrics
+	BootstrapAddresses []string // Initial peer addresses to connect to for network discovery
+	ListenAddresses    []string // Network addresses to listen on for incoming connections
+	AdvertiseAddresses []string // Addresses to advertise to other peers (may differ from listen addresses)
+	Port               int      // Port number for P2P communication
+	DHTProtocolID      string   // Protocol ID for the DHT used by this node
+	PrivateKey         string   // Node's private key for secure communication
+	SharedKey          string   // Shared key for private network communication
+	UsePrivateDHT      bool     // Whether to use a private DHT instead of the public IPFS DHT
+	OptimiseRetries    bool     // Whether to optimize connection retry behavior
+	Advertise          bool     // Whether to advertise this node's presence on the network
+	StaticPeers        []string // List of peer addresses to always attempt to connect to
 }
 
 // Logger defines the interface for logging within the P2P node.

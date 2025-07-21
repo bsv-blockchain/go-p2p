@@ -448,7 +448,7 @@ func TestP2PNode_InitDHT(t *testing.T) {
 	config := Config{
 		ProcessName:     "dht-test",
 		ListenAddresses: []string{"127.0.0.1"},
-		Port:            0,
+		Port:            3111,
 	}
 
 	node, err := NewNode(ctx, logger, config)
@@ -479,7 +479,7 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 		config := Config{
 			ProcessName:        "private-dht-test",
 			ListenAddresses:    []string{"127.0.0.1"},
-			Port:               0,
+			Port:               3111,
 			BootstrapAddresses: []string{},
 			DHTProtocolID:      "/test/dht/1.0.0",
 		}

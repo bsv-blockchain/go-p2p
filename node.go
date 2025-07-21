@@ -48,16 +48,26 @@ func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 
 	var (
 		err error
-		h   host.Host // the libp2p host for the node
+		h   host.Host       // the libp2p host for the node
+		pk  *crypto.PrivKey // the private key for the node's identity
 	)
 
-	if config.PrivateKey == nil {
-		config.PrivateKey, err = generatePrivateKey(ctx)
+	if config.PrivateKey == "" {
+		pk, err = generatePrivateKey(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("[Node] error generating private key: %w", err)
+		}
+	} else {
+		// Decode the provided private key from hex format
+		pk, err = decodeHexEd25519PrivateKey(config.PrivateKey)
+		if err != nil {
+			return nil, fmt.Errorf("[Node] error decoding private key: %w", err)
+		}
 	}
-	
+
 	// If a private DHT is configured, set up the private network
 	if config.UsePrivateDHT {
-		h, err = setUpPrivateNetwork(logger, config)
+		h, err = setUpPrivateNetwork(logger, config, pk)
 		if err != nil {
 			return nil, fmt.Errorf("[Node] error setting up private network: %w", err)
 		}
@@ -70,7 +80,7 @@ func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 
 		opts := []libp2p.Option{
 			libp2p.ListenAddrStrings(listenMultiAddresses...),
-			libp2p.Identity(*config.PrivateKey),
+			libp2p.Identity(*pk),
 		}
 
 		// If advertise addresses are specified, add them to the options
@@ -187,7 +197,7 @@ func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 // Returns:
 //   - A configured libp2p host ready for private network operation
 //   - Error if the shared key is invalid or host creation fails
-func setUpPrivateNetwork(logger Logger, config Config) (host.Host, error) {
+func setUpPrivateNetwork(logger Logger, config Config, pk *crypto.PrivKey) (host.Host, error) {
 	var h host.Host
 
 	s := ""
@@ -209,7 +219,7 @@ func setUpPrivateNetwork(logger Logger, config Config) (host.Host, error) {
 	// Set up libp2p options
 	opts := []libp2p.Option{
 		libp2p.ListenAddrStrings(listenMultiAddresses...),
-		libp2p.Identity(*config.PrivateKey),
+		libp2p.Identity(*pk),
 		libp2p.PrivateNetwork(psk),
 	}
 
