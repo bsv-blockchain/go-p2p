@@ -318,7 +318,7 @@ jobs:
   performance-summary:
     name: 📊 Performance Summary
     if: always()
-    needs: [load-env, setup, test-makefile, security, code-quality, test-suite, benchmarks, release]
+    needs: [load-env, setup, test-makefile, security, code-quality, test-suite, benchmarks, release, status-check]
     uses: ./.github/workflows/fortress-performance-summary.yml
     with:
       benchmarks-result: ${{ needs.benchmarks.result }}
@@ -330,6 +330,7 @@ jobs:
       setup-result: ${{ needs.setup.result }}
       start-epoch: ${{ needs.setup.outputs.start-epoch }}
       start-time: ${{ needs.setup.outputs.start-time }}
+      status-check-result: ${{ needs.status-check.result }}
       test-makefile-result: ${{ needs.test-makefile.result }}
       test-matrix: ${{ needs.setup.outputs.test-matrix }}
       test-suite-result: ${{ needs.test-suite.result }}
