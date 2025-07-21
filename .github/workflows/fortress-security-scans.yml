@@ -265,24 +265,30 @@ jobs:
       # ————————————————————————————————————————————————————————————————
       - name: 🔍 Check repository security conditions
         id: repo-check
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
         run: |
           echo "🔍 Checking repository security conditions..."
-          echo "Event Name: ${{ github.event_name }}"
-          echo "Actor: ${{ github.actor }}"
-          echo "Repository: ${{ github.repository }}"
-          echo "Head Ref: ${{ github.head_ref }}"
-          
+          echo "Event Name: $GITHUB_EVENT_NAME"
+          echo "Actor: $GITHUB_ACTOR"
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Head Ref: $GITHUB_HEAD_REF"
+
           # For workflow_call, we typically trust the calling workflow from the same repo
           # For pull_request events, check if head repo matches base repo
-          if [[ "${{ github.event_name }}" == "workflow_call" ]]; then
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_call" ]]; then
             echo "✅ Workflow call from same repository - security scans allowed"
             echo "is_same_repo=true" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${{ github.repository }}" ]] || [[ -z "${{ github.event.pull_request.head.repo.full_name }}" ]]; then
+          elif [[ "$PR_HEAD_REPO" == "$GITHUB_REPOSITORY" ]] || [[ -z "$PR_HEAD_REPO" ]]; then
             echo "✅ Same repository or push event - security scans allowed"
             echo "is_same_repo=true" >> $GITHUB_OUTPUT
           else
             echo "⚠️  Fork detected - skipping secret-sensitive scans for security"
-            echo "PR Head Repo: ${{ github.event.pull_request.head.repo.full_name }}"
+            echo "PR Head Repo: $PR_HEAD_REPO"
             echo "is_same_repo=false" >> $GITHUB_OUTPUT
           fi
 
