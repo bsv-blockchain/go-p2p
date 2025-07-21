@@ -28,7 +28,7 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 	config1 := Config{
 		ProcessName:        "node1",
 		ListenAddresses:    []string{"127.0.0.1"},
-		AdvertiseAddresses: []string{"127.0.1"},
+		AdvertiseAddresses: []string{"127.0.0.1"},
 		Port:               3111, // Random port
 	}
 
@@ -43,7 +43,7 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 	config2 := Config{
 		ProcessName:        "node2",
 		ListenAddresses:    []string{"127.0.0.1"},
-		AdvertiseAddresses: []string{"127.0.1"},
+		AdvertiseAddresses: []string{"127.0.0.1"},
 		Port:               3112,
 		StaticPeers:        []string{node1Addr},
 	}
