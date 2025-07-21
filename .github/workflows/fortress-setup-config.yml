@@ -78,6 +78,9 @@ on:
       gitleaks-enabled:
         description: "Whether Gitleaks secret scanning is enabled"
         value: ${{ jobs.setup-config.outputs.gitleaks-enabled }}
+      is-release-run:
+        description: "Whether this is a release-eligible run (tag starting with v)"
+        value: ${{ jobs.setup-config.outputs.is-release-run }}
       start-epoch:
         description: "Workflow start epoch time"
         value: ${{ jobs.setup-config.outputs.start-epoch }}
@@ -122,6 +125,7 @@ jobs:
       nancy-enabled: ${{ steps.config.outputs.nancy-enabled }}
       govulncheck-enabled: ${{ steps.config.outputs.govulncheck-enabled }}
       gitleaks-enabled: ${{ steps.config.outputs.gitleaks-enabled }}
+      is-release-run: ${{ steps.config.outputs.is-release-run }}
       start-epoch: ${{ steps.timer.outputs.start-epoch }}
       start-time: ${{ steps.timer.outputs.start-time }}
       static-analysis-enabled: ${{ steps.config.outputs.static-analysis-enabled }}
@@ -307,6 +311,14 @@ jobs:
           echo "gitleaks-enabled=${{ env.ENABLE_SECURITY_SCAN_GITLEAKS }}" >> $GITHUB_OUTPUT
           echo "static-analysis-enabled=${{ env.ENABLE_STATIC_ANALYSIS }}" >> $GITHUB_OUTPUT
           echo "fuzz-testing-enabled=${{ env.ENABLE_FUZZ_TESTING }}" >> $GITHUB_OUTPUT
+          
+          # Detect if this is a release run
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "is-release-run=true" >> $GITHUB_OUTPUT
+            echo "🚀 Release detected: Tag ${{ github.ref_name }}"
+          else
+            echo "is-release-run=false" >> $GITHUB_OUTPUT
+          fi
 
       # ————————————————————————————————————————————————————————————————
       # Build the final summary of the configuration
@@ -328,6 +340,17 @@ jobs:
           # Start building the summary
           echo "# 🏰 GoFortress CI Configuration Report" >> $GITHUB_STEP_SUMMARY
           echo "_Generated at: ${SUMMARY_TIME}_" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Workflow Trigger Information
+          echo "## 🎯 Workflow Trigger" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Trigger Type** | \`${{ github.event_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Reference** | \`${{ github.ref }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch/Tag** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Is Tag Push** | $([ "${{ startsWith(github.ref, 'refs/tags/') }}" == "true" ] && echo "✅ Yes" || echo "❌ No") |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Is Release Eligible** | $([ "${{ startsWith(github.ref, 'refs/tags/v') }}" == "true" ] && echo "🚀 **Yes - Release will run if tests pass**" || echo "❌ No") |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Environment Overview
