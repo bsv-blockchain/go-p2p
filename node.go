@@ -32,7 +32,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// NewP2PNode creates and initializes a new P2P network node with the provided configuration.
+// NewNode creates and initializes a new P2P network node with the provided configuration.
 // This constructor performs the core setup of the libp2p networking stack, including:
 //   - Setting up the node's cryptographic identity (private key)
 //   - Configuring network transports and listeners
@@ -45,7 +45,7 @@ import (
 //   - config: P2P-specific configuration parameters defining network behavior
 //
 // Returns a fully initialized P2P node ready for starting, or an error if initialization fails.
-func NewP2PNode(ctx context.Context, logger *logrus.Logger, config Config) (*Node, error) {
+func NewNode(ctx context.Context, logger *logrus.Logger, config Config) (*Node, error) {
 	logger.Infof("[Node] Creating node")
 
 	var (

@@ -25,7 +25,7 @@ func TestP2PNode_TopicOperations(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.Stop(ctx)
 
@@ -90,7 +90,7 @@ func TestP2PNode_Publishing(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.Stop(ctx)
 
@@ -155,7 +155,7 @@ func TestP2PNode_Publishing(t *testing.T) {
 		Port:            0,
 	}
 
-	sender, err := NewP2PNode(ctx, logger, config1)
+	sender, err := NewNode(ctx, logger, config1)
 	require.NoError(t, err)
 	defer sender.Stop(ctx)
 
@@ -165,7 +165,7 @@ func TestP2PNode_Publishing(t *testing.T) {
 		Port:            0,
 	}
 
-	receiver, err := NewP2PNode(ctx, logger, config2)
+	receiver, err := NewNode(ctx, logger, config2)
 	require.NoError(t, err)
 	defer receiver.Stop(ctx)
 
@@ -233,7 +233,7 @@ func TestP2PNode_InitGossipSub(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.host.Close()
 
@@ -253,7 +253,7 @@ func TestP2PNode_InitGossipSub(t *testing.T) {
 
 	t.Run("initGossipSub empty topics", func(t *testing.T) {
 		// Reset node
-		node2, err := NewP2PNode(ctx, logger, config)
+		node2, err := NewNode(ctx, logger, config)
 		require.NoError(t, err)
 		defer node2.host.Close()
 
@@ -275,7 +275,7 @@ func TestSubscribeToTopics(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.host.Close()
 
@@ -312,7 +312,7 @@ func TestP2PNode_ConcurrentPublishing(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.Stop(ctx)
 
@@ -367,7 +367,7 @@ func TestP2PNode_HandlerContextCancellation(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(context.Background(), logger, config)
+	node, err := NewNode(context.Background(), logger, config)
 	require.NoError(t, err)
 	defer node.host.Close()
 
@@ -428,7 +428,7 @@ func TestSubscribeToTopics_Error(t *testing.T) {
 		Port:            0,
 	}
 
-	node, err := NewP2PNode(ctx, logger, config)
+	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer node.host.Close()
 
