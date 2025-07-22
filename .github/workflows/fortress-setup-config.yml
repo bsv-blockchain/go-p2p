@@ -353,26 +353,19 @@ jobs:
           echo "| **Is Release Eligible** | $([ "${{ startsWith(github.ref, 'refs/tags/v') }}" == "true" ] && echo "🚀 **Yes - Release will run if tests pass**" || echo "❌ No") |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Environment Overview
-          echo "## 📊 Environment Overview" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total Environment Variables Loaded**: $ENV_COUNT" >> $GITHUB_STEP_SUMMARY
-          echo "- **Configuration Source**: \`.github/.env.shared\`" >> $GITHUB_STEP_SUMMARY
+          # Configuration Statistics (moved up for overview)
+          echo "## 📈 Configuration Overview" >> $GITHUB_STEP_SUMMARY
+          ENABLED_FEATURES=$(echo "$ENV_JSON" | jq -r '[to_entries | .[] | select(.key | startswith("ENABLE_")) | select(.value == "true")] | length')
+          DISABLED_FEATURES=$(echo "$ENV_JSON" | jq -r '[to_entries | .[] | select(.key | startswith("ENABLE_")) | select(.value == "false")] | length')
+          MATRIX_COUNT=$(echo "$MATRIX_JSON" | jq '.include | length')
+
           echo "- **Workflow Start Time**: ${{ steps.timer.outputs.start-time }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # All Environment Variables
-          echo "## 🔍 Loaded Environment Variables" >> $GITHUB_STEP_SUMMARY
-          echo "<details>" >> $GITHUB_STEP_SUMMARY
-          echo "<summary>Click to expand all $ENV_COUNT environment variables</summary>" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Variable | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-
-          # Sort and display all env vars
-          echo "$ENV_JSON" | jq -r 'to_entries | sort_by(.key) | .[] | "| **\(.key)** | `\(.value)` |"' >> $GITHUB_STEP_SUMMARY
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "</details>" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Environment Variables**: $ENV_COUNT (from \`.github/.env.shared\`)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Enabled Features**: $ENABLED_FEATURES" >> $GITHUB_STEP_SUMMARY
+          echo "- **Disabled Features**: $DISABLED_FEATURES" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test Matrix Combinations**: $MATRIX_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- **Unique Go Versions**: $(echo "$UNIQUE_GO_VERSIONS" | jq 'length')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runner Operating Systems**: $([ "${{ env.PRIMARY_RUNNER }}" == "${{ env.SECONDARY_RUNNER }}" ] && echo "1" || echo "2")" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Core Configuration
@@ -384,6 +377,17 @@ jobs:
           echo "| **Primary Go Version** | \`${{ env.GO_PRIMARY_VERSION }}\` | Main Go version for builds |" >> $GITHUB_STEP_SUMMARY
           echo "| **Secondary Go Version** | \`${{ env.GO_SECONDARY_VERSION }}\` | Additional Go version for testing |" >> $GITHUB_STEP_SUMMARY
           echo "| **Unique Go Versions** | $UNIQUE_GO_VERSIONS | Deduplicated list of Go versions |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Test Matrix
+          echo "## 🧪 Generated Test Matrix" >> $GITHUB_STEP_SUMMARY
+          echo "**Total test configurations**: $MATRIX_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| # | OS | Go Version | Configuration Name | Fuzz Testing |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|----|-----------|--------------------|--------------|" >> $GITHUB_STEP_SUMMARY
+
+          echo "$MATRIX_JSON" | jq -r '.include | to_entries | .[] | "| \(.key + 1) | \(.value.os) | \(.value["go-version"]) | \(.value.name) | \(if .value["run-fuzz"] then "✅ Yes" else "❌ No" end) |"' >> $GITHUB_STEP_SUMMARY
+
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Feature Flags
@@ -410,6 +414,23 @@ jobs:
           echo "| **Verbose Output** | $([ "${{ env.ENABLE_VERBOSE_TEST_OUTPUT }}" == "true" ] && echo "✅ Enabled" || echo "❌ Disabled") | Test output verbosity |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
+          # Security Tools Configuration
+          echo "## 🔒 Security Tools Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "| Tool | Version | Configuration |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|---------|---------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Gitleaks** | \`${{ env.GITLEAKS_VERSION }}\` | Notify: \`${{ env.GITLEAKS_NOTIFY_USER_LIST }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Govulncheck** | \`${{ env.GOVULNCHECK_VERSION }}\` | Go vulnerability scanner |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Nancy** | \`${{ env.NANCY_VERSION }}\` | Excludes: \`${{ env.NANCY_EXCLUDES }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # GitHub Token Configuration
+          echo "## 🔑 Authentication" >> $GITHUB_STEP_SUMMARY
+          echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Preferred Token** | \`${{ env.PREFERRED_GITHUB_TOKEN }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Token Type** | $([ "${{ env.PREFERRED_GITHUB_TOKEN }}" == "GH_PAT_TOKEN" ] && echo "Personal Access Token (5000 req/hour)" || echo "Default GITHUB_TOKEN (1000 req/hour)") |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
           # Custom Project Variables
           echo "## 🎨 Custom Project Configuration" >> $GITHUB_STEP_SUMMARY
           PROJECT_VARS=$(echo "$ENV_JSON" | jq -r 'to_entries | map(select(.key | startswith("CUSTOM_"))) | length')
@@ -424,45 +445,19 @@ jobs:
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Security Tools Configuration
-          echo "## 🔒 Security Tools Configuration" >> $GITHUB_STEP_SUMMARY
-          echo "| Tool | Version | Configuration |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|---------|---------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Gitleaks** | \`${{ env.GITLEAKS_VERSION }}\` | Notify: \`${{ env.GITLEAKS_NOTIFY_USER_LIST }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Govulncheck** | \`${{ env.GOVULNCHECK_VERSION }}\` | Go vulnerability scanner |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Nancy** | \`${{ env.NANCY_VERSION }}\` | Excludes: \`${{ env.NANCY_EXCLUDES }}\` |" >> $GITHUB_STEP_SUMMARY
+          # All Environment Variables (moved to end as reference)
+          echo "## 🔍 All Environment Variables" >> $GITHUB_STEP_SUMMARY
+          echo "<details>" >> $GITHUB_STEP_SUMMARY
+          echo "<summary>Click to expand all $ENV_COUNT environment variables</summary>" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Variable | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
 
-          # Test Matrix
-          echo "## 🧪 Generated Test Matrix" >> $GITHUB_STEP_SUMMARY
-          MATRIX_COUNT=$(echo "$MATRIX_JSON" | jq '.include | length')
-          echo "**Total test configurations**: $MATRIX_COUNT" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| # | OS | Go Version | Configuration Name | Fuzz Testing |" >> $GITHUB_STEP_SUMMARY
-          echo "|---|----|-----------|--------------------|--------------|" >> $GITHUB_STEP_SUMMARY
-
-          echo "$MATRIX_JSON" | jq -r '.include | to_entries | .[] | "| \(.key + 1) | \(.value.os) | \(.value["go-version"]) | \(.value.name) | \(if .value["run-fuzz"] then "✅ Yes" else "❌ No" end) |"' >> $GITHUB_STEP_SUMMARY
+          # Sort and display all env vars
+          echo "$ENV_JSON" | jq -r 'to_entries | sort_by(.key) | .[] | "| **\(.key)** | `\(.value)` |"' >> $GITHUB_STEP_SUMMARY
 
           echo "" >> $GITHUB_STEP_SUMMARY
-
-          # GitHub Token Configuration
-          echo "## 🔑 Authentication" >> $GITHUB_STEP_SUMMARY
-          echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Preferred Token** | \`${{ env.PREFERRED_GITHUB_TOKEN }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Token Type** | $([ "${{ env.PREFERRED_GITHUB_TOKEN }}" == "GH_PAT_TOKEN" ] && echo "Personal Access Token (5000 req/hour)" || echo "Default GITHUB_TOKEN (1000 req/hour)") |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Summary Statistics
-          echo "## 📈 Configuration Statistics" >> $GITHUB_STEP_SUMMARY
-          ENABLED_FEATURES=$(echo "$ENV_JSON" | jq -r '[to_entries | .[] | select(.key | startswith("ENABLE_")) | select(.value == "true")] | length')
-          DISABLED_FEATURES=$(echo "$ENV_JSON" | jq -r '[to_entries | .[] | select(.key | startswith("ENABLE_")) | select(.value == "false")] | length')
-
-          echo "- **Enabled Features**: $ENABLED_FEATURES" >> $GITHUB_STEP_SUMMARY
-          echo "- **Disabled Features**: $DISABLED_FEATURES" >> $GITHUB_STEP_SUMMARY
-          echo "- **Test Matrix Combinations**: $MATRIX_COUNT" >> $GITHUB_STEP_SUMMARY
-          echo "- **Unique Go Versions**: $(echo "$UNIQUE_GO_VERSIONS" | jq 'length')" >> $GITHUB_STEP_SUMMARY
-          echo "- **Runner Operating Systems**: $([ "${{ env.PRIMARY_RUNNER }}" == "${{ env.SECONDARY_RUNNER }}" ] && echo "1" || echo "2")" >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Footer

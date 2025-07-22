@@ -294,47 +294,11 @@ jobs:
           echo "🎉 All required checks passed (skipped jobs are considered OK)."
 
   # ----------------------------------------------------------------------------------
-  # Release Debug Info
-  # ----------------------------------------------------------------------------------
-  release-debug:
-    name: 🔍 Release Debug Info
-    if: always()
-    needs: [status-check]
-    runs-on: ubuntu-latest
-    steps:
-      - name: 🔍 Debug Release Conditions
-        run: |
-          echo "=== RELEASE CONDITION DEBUG ==="
-          echo "GitHub Ref: ${{ github.ref }}"
-          echo "GitHub Ref Name: ${{ github.ref_name }}"
-          echo "Is Tag: ${{ startsWith(github.ref, 'refs/tags/') }}"
-          echo "Is Version Tag: ${{ startsWith(github.ref, 'refs/tags/v') }}"
-          echo "Status Check Result: ${{ needs.status-check.result }}"
-          echo "Status Check != failure: ${{ needs.status-check.result != 'failure' }}"
-          echo ""
-          echo "Release will run: ${{ startsWith(github.ref, 'refs/tags/v') && needs.status-check.result != 'failure' }}"
-          echo ""
-
-          if [[ "${{ startsWith(github.ref, 'refs/tags/v') }}" == "false" ]]; then
-            echo "❌ Not a version tag (doesn't start with 'refs/tags/v')"
-          fi
-
-          if [[ "${{ needs.status-check.result }}" == "failure" ]]; then
-            echo "❌ Status check failed"
-          elif [[ "${{ needs.status-check.result }}" == "skipped" ]]; then
-            echo "⚠️ Status check was skipped"
-          elif [[ "${{ needs.status-check.result }}" == "cancelled" ]]; then
-            echo "⚠️ Status check was cancelled"
-          else
-            echo "✅ Status check result: ${{ needs.status-check.result }}"
-          fi
-
-  # ----------------------------------------------------------------------------------
   # Release Version
   # ----------------------------------------------------------------------------------
   release:
     name: 🚀 Release Version
-    needs: [load-env, setup, status-check]
+    needs: [load-env, setup, status-check, code-quality]
     # Only run on successful tag pushes
     if: startsWith(github.ref, 'refs/tags/v') && needs.status-check.result != 'failure'
     uses: ./.github/workflows/fortress-release.yml
@@ -364,8 +328,7 @@ jobs:
         test-suite,
         benchmarks,
         release,
-        status-check,
-        release-debug
+        status-check
       ]
     uses: ./.github/workflows/fortress-performance-summary.yml
     with:
