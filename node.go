@@ -470,6 +470,7 @@ func (s *Node) SetTopicHandler(ctx context.Context, topicName string, handler Ha
 	}
 
 	s.handlerByTopic[topicName] = handler
+	s.logger.Infof("[Node][SetTopicHandler] Successfully subscribed to topic: %s", topicName)
 
 	go func() {
 		s.logger.Infof("[Node][SetTopicHandler] starting handler for topic: %s", topicName)
@@ -489,7 +490,12 @@ func (s *Node) SetTopicHandler(ctx context.Context, topicName string, handler Ha
 					continue
 				}
 
-				s.logger.Debugf("[Node][SetTopicHandler]: topic: %s - from: %s - message: %s\n", *m.Message.Topic, m.ReceivedFrom.ShortString(), strings.TrimSpace(string(m.Message.Data)))
+				// Set logger to info for handshake messages, debug for others
+				if strings.Contains(*m.Message.Topic, "handshake") {
+					s.logger.Infof("[Node][SetTopicHandler]: topic: %s - from: %s - message: %s\n", *m.Message.Topic, m.ReceivedFrom.ShortString(), strings.TrimSpace(string(m.Message.Data)))
+				} else {
+					s.logger.Debugf("[Node][SetTopicHandler]: topic: %s - from: %s - message: %s\n", *m.Message.Topic, m.ReceivedFrom.ShortString(), strings.TrimSpace(string(m.Message.Data)))
+				}
 				handler(ctx, m.Data, m.ReceivedFrom.String())
 			}
 		}
@@ -510,6 +516,15 @@ func (s *Node) GetTopic(topicName string) *pubsub.Topic {
 
 // Publish sends a message to all subscribers of the specified topic.
 func (s *Node) Publish(ctx context.Context, topicName string, msgBytes []byte) error {
+	// check if in listening mode - if listen_only don't publish outbound messages except handshake messages
+	if s.config.ListenMode == ListenModeListenOnly {
+		// allow handshake mssages even in listen_only mode as they're essential for peer discovery
+		if !strings.Contains(topicName, "handshake") {
+			s.logger.Debugf("[Node][Publish] skipping publish in listen_only mode for topic: %s", topicName)
+			return nil
+		}
+		s.logger.Debugf("[Node][Publish] allowing handshake mesages in listen_only mode for topic: %s", topicName)
+	}
 	if len(s.topics) == 0 {
 		return fmt.Errorf("[Node][Publish] topics not initialized")
 	}
@@ -535,6 +550,14 @@ func (s *Node) Publish(ctx context.Context, topicName string, msgBytes []byte) e
 
 // SendToPeer sends a message to a peer. It will attempt to connect to the peer if not already connected.
 func (s *Node) SendToPeer(ctx context.Context, peerID peer.ID, msg []byte) (err error) {
+	// check listen mode - if listen_only don't send outbound messages except handshake messages
+	if s.config.ListenMode == ListenModeListenOnly {
+		if !strings.Contains(string(msg), "\"type\":\"version\"") && !strings.Contains(string(msg), "\"type\":\"verack\"") {
+			s.logger.Debugf("[Node][SendToPeer] skipping send in listen_only mode to peer: %s", peerID)
+			return nil
+		}
+		s.logger.Debugf("[Node][SendToPeer] allowing handshake messages in listen_only mode to peer: %s", peerID)
+	}
 	h2pi := s.host.Peerstore().PeerInfo(peerID)
 	s.logger.Infof("[Node][SendToPeer] dialing %s", h2pi.Addrs)
 
@@ -1058,10 +1081,11 @@ func (s *Node) BytesReceived() uint64 {
 
 // PeerInfo contains information about a connected peer.
 type PeerInfo struct {
-	ID            peer.ID
-	Addrs         []multiaddr.Multiaddr
-	CurrentHeight int32
-	ConnTime      *time.Time // Connection time (nil if not connected)
+	ID             peer.ID
+	Addrs          []multiaddr.Multiaddr
+	CurrentHeight  int32
+	StartingHeight int32      // Starting height of the peer when first connected
+	ConnTime       *time.Time // Connection time (nil if not connected)
 }
 
 // ConnectedPeers returns information about all connected peers.
@@ -1079,6 +1103,11 @@ func (s *Node) ConnectedPeers() []PeerInfo {
 			height = h.(int32)
 		}
 
+		var startingHeight int32
+		if sh, ok := s.peerStartingHeights.Load(peerID); ok {
+			startingHeight = sh.(int32)
+		}
+
 		var connTime *time.Time
 		if ct, ok := s.peerConnTimes.Load(peerID); ok {
 			t := ct.(time.Time)
@@ -1086,10 +1115,11 @@ func (s *Node) ConnectedPeers() []PeerInfo {
 		}
 
 		peers = append(peers, PeerInfo{
-			ID:            peerID,
-			Addrs:         s.host.Network().Peerstore().PeerInfo(peerID).Addrs,
-			CurrentHeight: height,
-			ConnTime:      connTime,
+			ID:             peerID,
+			Addrs:          s.host.Network().Peerstore().PeerInfo(peerID).Addrs,
+			CurrentHeight:  height,
+			StartingHeight: startingHeight,
+			ConnTime:       connTime,
 		})
 	}
 
@@ -1113,6 +1143,11 @@ func (s *Node) CurrentlyConnectedPeers() []PeerInfo {
 			height = h.(int32)
 		}
 
+		var startingHeight int32
+		if sh, ok := s.peerStartingHeights.Load(peerID); ok {
+			startingHeight = sh.(int32)
+		}
+
 		var connTime *time.Time
 		if ct, ok := s.peerConnTimes.Load(peerID); ok {
 			t := ct.(time.Time)
@@ -1120,10 +1155,11 @@ func (s *Node) CurrentlyConnectedPeers() []PeerInfo {
 		}
 
 		peers = append(peers, PeerInfo{
-			ID:            peerID,
-			Addrs:         s.host.Network().Peerstore().PeerInfo(peerID).Addrs,
-			CurrentHeight: height,
-			ConnTime:      connTime,
+			ID:             peerID,
+			Addrs:          s.host.Network().Peerstore().PeerInfo(peerID).Addrs,
+			CurrentHeight:  height,
+			StartingHeight: startingHeight,
+			ConnTime:       connTime,
 		})
 	}
 
@@ -1150,7 +1186,29 @@ func (s *Node) DisconnectPeer(_ context.Context, peerID peer.ID) error {
 // UpdatePeerHeight updates the blockchain height for a specific peer.
 func (s *Node) UpdatePeerHeight(peerID peer.ID, height int32) {
 	s.logger.Debugf("[Node] UpdatePeerHeight: %s %d\n", peerID.String(), height)
+
+	// if this is the first height we receive for this peer, use it as starting height
+	if _, exists := s.peerStartingHeights.Load(peerID); !exists && height > 0 {
+		s.logger.Infof("[Node] setting starting height for peer %s to %d (first height update)", peerID.String(), height)
+		s.peerStartingHeights.Store(peerID, height)
+	}
 	s.peerHeights.Store(peerID, height)
+}
+
+// SetPeerStartingHeight stores the starting height for a peer (height when first connected)
+func (s *Node) SetPeerStartingHeight(peerID peer.ID, height int32) {
+	s.logger.Infof("[P2PNode] SetPeerStartingHeight: %s %d", peerID.String(), height)
+	s.peerStartingHeights.Store(peerID, height)
+}
+
+// GetPeerStartingHeight retrieves the starting height for a peer
+func (s *Node) GetPeerStartingHeight(peerID peer.ID) (int32, bool) {
+	if height, exists := s.peerStartingHeights.Load(peerID); exists {
+		if h, ok := height.(int32); ok {
+			return h, true
+		}
+	}
+	return 0, false
 }
 
 // TODO: remove - helper function for extracting IP from multiaddr

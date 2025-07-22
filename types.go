@@ -14,6 +14,11 @@ import (
 const (
 	errorCreatingDhtMessage = "[Node] error creating DHT: %w"
 	multiAddrIPTemplate     = "/ip4/%s/tcp/%d"
+
+	// ListenModeFull defines the node should operate in full mode
+	ListenModeFull = "full"
+	// ListenModeListenOnly defines the node should operate in listen-only mode
+	ListenModeListenOnly = "listen_only"
 )
 
 // Node implements the NodeI interface and provides the core functionality
@@ -40,12 +45,13 @@ type Node struct {
 	callbackMutex     sync.RWMutex                   // Mutex for thread-safe callback access
 
 	// IMPORTANT: The following variables must only be used atomically.
-	bytesReceived uint64   // Counter for bytes received over the network
-	bytesSent     uint64   // Counter for bytes sent over the network
-	lastRecv      int64    // Timestamp of last message received
-	lastSend      int64    // Timestamp of last message sent
-	peerHeights   sync.Map // Thread-safe map tracking peer blockchain heights
-	peerConnTimes sync.Map // Thread-safe map tracking peer connection times (peer.ID -> time.Time)
+	bytesReceived       uint64   // Counter for bytes received over the network
+	bytesSent           uint64   // Counter for bytes sent over the network
+	lastRecv            int64    // Timestamp of last message received
+	lastSend            int64    // Timestamp of last message sent
+	peerHeights         sync.Map // Thread-safe map tracking peer blockchain heights
+	peerStartingHeights sync.Map // Thread-safe map for initial peer heights at connection time
+	peerConnTimes       sync.Map // Thread-safe map tracking peer connection times (peer.ID -> time.Time)
 }
 
 // Handler defines the function signature for topic message handlers.
@@ -76,6 +82,7 @@ type Config struct {
 	OptimiseRetries    bool     // Whether to optimize connection retry behavior
 	Advertise          bool     // Whether to advertise this node's presence on the network
 	StaticPeers        []string // List of peer addresses to always attempt to connect to
+	ListenMode         string   // Mode of operation: "full" for active participation, "listen_only" for passive listening
 }
 
 // Logger defines the interface for logging within the P2P node.
