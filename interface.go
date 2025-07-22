@@ -61,6 +61,12 @@ type NodeI interface {
 	// UpdatePeerHeight updates the height of a peer, which is used to track the blockchain state of that peer.
 	UpdatePeerHeight(peerID peer.ID, height int32)
 
+	// GetPeerStartingHeight retrieves the initial height of a peer at the time of connection.
+	GetPeerStartingHeight(peerID peer.ID) (int32, bool)
+
+	// SetPeerStartingHeight sets the initial height of a peer at the time of connection.
+	SetPeerStartingHeight(peerID peer.ID, height int32)
+
 	// Stats methods
 
 	// LastSend returns the timestamp of the last message sent by the node.
