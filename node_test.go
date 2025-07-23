@@ -493,7 +493,7 @@ func TestP2PNode_ConnectToPeer(t *testing.T) {
 
 	t.Run("successful connection", func(t *testing.T) {
 		err := node1.ConnectToPeer(ctx, node2Addr)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// Verify connection
 		peers := node1.host.Network().Peers()
@@ -631,7 +631,7 @@ func TestP2PNode_ConnectToPeer(t *testing.T) {
 			time.Sleep(100 * time.Millisecond) // Give time for disconnection
 
 			err := node1.ConnectToPeer(ctx, format)
-			assert.NoError(t, err, "Failed with format: %s", format)
+			require.NoError(t, err, "Failed with format: %s", format)
 
 			// Verify connection
 			peers := node1.host.Network().Peers()
