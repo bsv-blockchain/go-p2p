@@ -2,6 +2,8 @@ package p2p
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -453,5 +455,187 @@ func TestP2PNode_ThreadSafety(t *testing.T) {
 		// Wait for both to complete
 		<-done
 		<-done
+	})
+}
+
+func TestP2PNode_ConnectToPeer(t *testing.T) {
+	ctx := context.Background()
+	logger := logrus.New()
+	logger.SetLevel(logrus.ErrorLevel)
+
+	// Create two nodes for testing connections
+	config1 := Config{
+		ProcessName:        "node1",
+		ListenAddresses:    []string{"127.0.0.1"},
+		AdvertiseAddresses: []string{"127.0.0.1"},
+		Port:               3111, // Random port
+	}
+
+	config2 := Config{
+		ProcessName:        "node2",
+		ListenAddresses:    []string{"127.0.0.1"},
+		AdvertiseAddresses: []string{"127.0.0.1"},
+		Port:               3112, // Random port
+	}
+
+	node1, err := NewNode(ctx, logger, config1)
+	require.NoError(t, err)
+	defer node1.host.Close()
+
+	node2, err := NewNode(ctx, logger, config2)
+	require.NoError(t, err)
+	defer node2.host.Close()
+
+	// Get node2's address
+	node2Addrs := node2.host.Addrs()
+	require.NotEmpty(t, node2Addrs)
+	node2Addr := node2Addrs[0].String() + "/p2p/" + node2.host.ID().String()
+
+	t.Run("successful connection", func(t *testing.T) {
+		err := node1.ConnectToPeer(ctx, node2Addr)
+		assert.NoError(t, err)
+
+		// Verify connection
+		peers := node1.host.Network().Peers()
+		assert.Contains(t, peers, node2.host.ID())
+	})
+
+	t.Run("connect to already connected peer", func(t *testing.T) {
+		// Should not error when connecting to already connected peer
+		err := node1.ConnectToPeer(ctx, node2Addr)
+		assert.NoError(t, err)
+	})
+
+	t.Run("invalid multiaddr", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			peerAddr string
+			errMsg   string
+		}{
+			{
+				name:     "empty address",
+				peerAddr: "",
+				errMsg:   "invalid multiaddr",
+			},
+			{
+				name:     "invalid format",
+				peerAddr: "not-a-multiaddr",
+				errMsg:   "invalid multiaddr",
+			},
+			{
+				name:     "missing peer ID",
+				peerAddr: "/ip4/127.0.0.1/tcp/4001",
+				errMsg:   "failed to get peer info",
+			},
+			{
+				name:     "invalid peer ID",
+				peerAddr: "/ip4/127.0.0.1/tcp/4001/p2p/invalid-peer-id",
+				errMsg:   "invalid-peer-id",
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				err := node1.ConnectToPeer(ctx, tt.peerAddr)
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errMsg)
+			})
+		}
+	})
+
+	t.Run("connect to non-existent peer", func(t *testing.T) {
+		// Create a valid multiaddr with non-existent peer
+		nonExistentAddr := "/ip4/127.0.0.1/tcp/55555/p2p/12D3KooWGRYZDHBembyGJQqQ6WgLqJWYNjnECJwGBnCg8vbCeo8F"
+		err := node1.ConnectToPeer(ctx, nonExistentAddr)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to connect to peer")
+	})
+
+	t.Run("connection with context cancellation", func(t *testing.T) {
+		// Create a new node for this test
+		config3 := Config{
+			ProcessName:     "node3",
+			ListenAddresses: []string{"127.0.0.1"},
+			Port:            0,
+		}
+		node3, err := NewNode(ctx, logger, config3)
+		require.NoError(t, err)
+		defer node3.host.Close()
+
+		// Create a context that we'll cancel
+		connectCtx, cancel := context.WithCancel(ctx)
+		cancel() // Cancel immediately
+
+		node3Addr := node3.host.Addrs()[0].String() + "/p2p/" + node3.host.ID().String()
+		err = node1.ConnectToPeer(connectCtx, node3Addr)
+		// The error might vary depending on when the cancellation is processed
+		// It could be a context canceled error or a connection failed error
+		assert.Error(t, err)
+	})
+
+	t.Run("connect with DNS multiaddr", func(t *testing.T) {
+		// Test DNS-based multiaddr (will fail since example.com is not a real p2p node)
+		dnsAddr := "/dns4/example.com/tcp/4001/p2p/12D3KooWGRYZDHBembyGJQqQ6WgLqJWYNjnECJwGBnCg8vbCeo8F"
+		err := node1.ConnectToPeer(ctx, dnsAddr)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to connect to peer")
+	})
+
+	t.Run("connect with IPv6 multiaddr", func(t *testing.T) {
+		// Test IPv6 multiaddr
+		ipv6Addr := "/ip6/::1/tcp/4001/p2p/12D3KooWGRYZDHBembyGJQqQ6WgLqJWYNjnECJwGBnCg8vbCeo8F"
+		err := node1.ConnectToPeer(ctx, ipv6Addr)
+		require.Error(t, err)
+		// Should fail to connect since there's no peer at this address
+		assert.Contains(t, err.Error(), "failed to connect to peer")
+	})
+
+	t.Run("connect to self", func(t *testing.T) {
+		// Get node1's own address
+		node1Addr := node1.host.Addrs()[0].String() + "/p2p/" + node1.host.ID().String()
+		err := node1.ConnectToPeer(ctx, node1Addr)
+		// libp2p should handle self-connection gracefully
+		// It typically returns success but doesn't actually create a connection
+		if err == nil {
+			// Verify we're not actually connected to ourself
+			peers := node1.host.Network().Peers()
+			assert.NotContains(t, peers, node1.host.ID())
+		}
+	})
+
+	t.Run("connect with various multiaddr formats", func(t *testing.T) {
+		// Test different valid multiaddr formats
+		node2ID := node2.host.ID().String()
+
+		// Extract the port from the multiaddr string
+		node2AddrStr := node2.host.Addrs()[0].String()
+		// Parse to extract port - format is like /ip4/127.0.0.1/tcp/PORT
+		parts := strings.Split(node2AddrStr, "/")
+		var node2Port string
+		for i, part := range parts {
+			if part == "tcp" && i+1 < len(parts) {
+				node2Port = parts[i+1]
+				break
+			}
+		}
+		require.NotEmpty(t, node2Port, "Failed to extract port from address")
+
+		formats := []string{
+			fmt.Sprintf("/ip4/127.0.0.1/tcp/%s/p2p/%s", node2Port, node2ID),
+			fmt.Sprintf("/ip4/127.0.0.1/tcp/%s/ipfs/%s", node2Port, node2ID), // ipfs is alias for p2p
+		}
+
+		for _, format := range formats {
+			// Disconnect first to test reconnection
+			_ = node1.DisconnectPeer(ctx, node2.host.ID())
+			time.Sleep(100 * time.Millisecond) // Give time for disconnection
+
+			err := node1.ConnectToPeer(ctx, format)
+			assert.NoError(t, err, "Failed with format: %s", format)
+
+			// Verify connection
+			peers := node1.host.Network().Peers()
+			assert.Contains(t, peers, node2.host.ID())
+		}
 	})
 }

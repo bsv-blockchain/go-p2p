@@ -49,6 +49,9 @@ type NodeI interface {
 	// CurrentlyConnectedPeers returns a list of currently connected peers with their information.
 	CurrentlyConnectedPeers() []PeerInfo
 
+	// ConnectToPeer connects to a peer identified by its ID, establishing a P2P connection.
+	ConnectToPeer(ctx context.Context, peer string) error
+
 	// DisconnectPeer disconnects a peer from the P2P network, removing it from the list of connected peers.
 	DisconnectPeer(ctx context.Context, peerID peer.ID) error
 
