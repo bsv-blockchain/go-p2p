@@ -81,6 +81,12 @@ func (m *MockP2PNode) CurrentlyConnectedPeers() []PeerInfo {
 	return nil
 }
 
+// ConnectToPeer mocks the ConnectToPeer method
+func (m *MockP2PNode) ConnectToPeer(ctx context.Context, peer string) error {
+	args := m.Called(ctx, peer)
+	return args.Error(0)
+}
+
 // DisconnectPeer mocks the DisconnectPeer method
 func (m *MockP2PNode) DisconnectPeer(ctx context.Context, peerID peer.ID) error {
 	args := m.Called(ctx, peerID)
