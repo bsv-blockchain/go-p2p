@@ -14,7 +14,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	alertP2P "github.com/bitcoin-sv/alert-system/app/p2p"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -110,7 +109,7 @@ func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 				// If no public addresses are set, let's attempt to grab it publicly
 				// Ignore errors because we don't care if we can't find it
 				var ifconfig string
-				ifconfig, localErr := alertP2P.GetPublicIP(context.Background())
+				ifconfig, localErr := GetPublicIP(context.Background())
 				if localErr != nil {
 					logger.Debugf("[Node] error getting public IP: %v", localErr)
 				}
