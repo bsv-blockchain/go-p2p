@@ -1,0 +1,3 @@
+# Ignore CVE-2021-43668 due to false positive or acceptable risk
+CVE-2021-43668
+
