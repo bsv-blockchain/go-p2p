@@ -43,6 +43,7 @@ type BlockMessage struct {
 	Height     uint32 // Position of the block in the blockchain
 	DataHubURL string // URL where the complete block data can be retrieved
 	PeerID     string // Identifier of the peer announcing the block
+	Header     string // Hexadecimal representation of the block header
 }
 
 // SubtreeMessage announces the availability of a subtree (transaction batch) to the network.
@@ -99,11 +100,12 @@ const (
 //
 // Fields are JSON-tagged to support serialization for network transmission.
 type HandshakeMessage struct {
-	Type       MessageType `json:"type"`
-	PeerID     string      `json:"peerID"`
-	BestHeight uint32      `json:"bestHeight"`
-	BestHash   string      `json:"bestHash"`
-	DataHubURL string      `json:"dataHubURL"`
-	UserAgent  string      `json:"userAgent"`
-	Services   uint64      `json:"services"`
+	Type        MessageType `json:"type"`
+	PeerID      string      `json:"peerID"`
+	BestHeight  uint32      `json:"bestHeight"`
+	BestHash    string      `json:"bestHash"`
+	DataHubURL  string      `json:"dataHubURL"`
+	UserAgent   string      `json:"userAgent"`
+	Services    uint64      `json:"services"`
+	TopicPrefix string      `json:"topicPrefix"` // Chain identifier to validate compatibility
 }
