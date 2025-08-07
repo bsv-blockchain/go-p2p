@@ -83,6 +83,10 @@ type Config struct {
 	Advertise          bool     // Whether to advertise this node's presence on the network
 	StaticPeers        []string // List of peer addresses to always attempt to connect to
 	ListenMode         string   // Mode of operation: "full" for active participation, "listen_only" for passive listening
+	EnableNATService   bool     // Whether to enable NAT service for peer connectivity
+	EnableHolePunching bool     // Whether to enable NAT hole punching
+	EnableRelay        bool     // Whether to enable relay functionality
+	EnableNATPortMap   bool     // Whether to enable NAT port mapping
 }
 
 // Logger defines the interface for logging within the P2P node.

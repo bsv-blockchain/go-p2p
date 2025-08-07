@@ -29,6 +29,22 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// addNATAndRelayOptions adds NAT and relay options to libp2p options based on config
+func addNATAndRelayOptions(opts []libp2p.Option, config Config) []libp2p.Option {
+	// Add NAT and relay options based on config
+	// EnableNATService and EnableNATPortMap both use NATPortMap, so only add once
+	if config.EnableNATService || config.EnableNATPortMap {
+		opts = append(opts, libp2p.NATPortMap())
+	}
+	if config.EnableHolePunching {
+		opts = append(opts, libp2p.EnableHolePunching())
+	}
+	if config.EnableRelay {
+		opts = append(opts, libp2p.EnableRelay())
+	}
+	return opts
+}
+
 // NewNode creates and initializes a new P2P network node with the provided configuration.
 // This constructor performs the core setup of the libp2p networking stack, including:
 //   - Setting up the node's cryptographic identity (private key)
@@ -81,6 +97,9 @@ func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 			libp2p.ListenAddrStrings(listenMultiAddresses...),
 			libp2p.Identity(*pk),
 		}
+
+		// Add NAT and relay options based on config
+		opts = addNATAndRelayOptions(opts, config)
 
 		// If advertise addresses are specified, add them to the options
 		addrsToAdvertise := buildAdvertiseMultiAddrs(logger, config.AdvertiseAddresses, config.Port)
@@ -221,6 +240,9 @@ func setUpPrivateNetwork(logger Logger, config Config, pk *crypto.PrivKey) (host
 		libp2p.Identity(*pk),
 		libp2p.PrivateNetwork(psk),
 	}
+
+	// Add NAT and relay options based on config
+	opts = addNATAndRelayOptions(opts, config)
 
 	// If advertise addresses are specified, add them to the options
 	addrsToAdvertise := buildAdvertiseMultiAddrs(logger, config.AdvertiseAddresses, config.Port)
@@ -1210,8 +1232,8 @@ func (s *Node) GetPeerStartingHeight(peerID peer.ID) (int32, bool) {
 	return 0, false
 }
 
-// TODO: remove - helper function for extracting IP from multiaddr
-
+// getIPFromMultiaddr extracts IP address from multiaddr using proper libp2p protocol methods
+// Returns the IP address string and an error if extraction fails
 func getIPFromMultiaddr(addr multiaddr.Multiaddr) (string, error) {
 	// First try to get DNS component
 	if value, err := addr.ValueForProtocol(multiaddr.P_DNS4); err == nil {
@@ -1232,6 +1254,13 @@ func getIPFromMultiaddr(addr multiaddr.Multiaddr) (string, error) {
 	}
 
 	return "", fmt.Errorf("no IP or DNS component found in multiaddr")
+}
+
+// extractIPFromMultiaddr extracts IP address from multiaddr, returns empty string on failure
+// This is a convenience wrapper around getIPFromMultiaddr for cases where error handling is not needed
+func extractIPFromMultiaddr(addr multiaddr.Multiaddr) string {
+	ip, _ := getIPFromMultiaddr(addr)
+	return ip
 }
 
 // GetProcessName returns the name of the current process.
@@ -1280,21 +1309,6 @@ func (s *Node) callPeerConnected(ctx context.Context, peerID peer.ID) {
 	if callback != nil {
 		go callback(ctx, peerID)
 	}
-}
-
-func extractIPFromMultiaddr(multiaddr multiaddr.Multiaddr) string {
-	str := multiaddr.String()
-
-	parts := strings.Split(str, "/")
-	for i, part := range parts {
-		if part == "ip4" || part == "ip6" {
-			if i+1 < len(parts) {
-				return parts[i+1]
-			}
-		}
-	}
-
-	return ""
 }
 
 // isPrivateIP checks if an IP address is private according to RFC 1918 and RFC 3927
