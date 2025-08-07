@@ -1311,8 +1311,6 @@ func (s *Node) callPeerConnected(ctx context.Context, peerID peer.ID) {
 	}
 }
 
-
-
 // isPrivateIP checks if an IP address is private according to RFC 1918 and RFC 3927
 func isPrivateIP(addr multiaddr.Multiaddr) bool {
 	ipStr := extractIPFromMultiaddr(addr)
