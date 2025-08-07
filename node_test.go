@@ -108,6 +108,105 @@ func TestNewP2PNode(t *testing.T) {
 			wantErr: true,
 			errMsg:  "error setting up private network",
 		},
+		{
+			name: "node with NAT service enabled",
+			config: Config{
+				ProcessName:      "nat-service-node",
+				ListenAddresses:  []string{"127.0.0.1"},
+				Port:             0,
+				EnableNATService: true,
+			},
+			wantErr: false,
+			validate: func(t *testing.T, node *Node) {
+				assert.NotNil(t, node.host)
+				assert.True(t, node.config.EnableNATService)
+			},
+		},
+		{
+			name: "node with hole punching enabled",
+			config: Config{
+				ProcessName:        "hole-punch-node",
+				ListenAddresses:    []string{"127.0.0.1"},
+				Port:               0,
+				EnableHolePunching: true,
+			},
+			wantErr: false,
+			validate: func(t *testing.T, node *Node) {
+				assert.NotNil(t, node.host)
+				assert.True(t, node.config.EnableHolePunching)
+			},
+		},
+		{
+			name: "node with relay enabled",
+			config: Config{
+				ProcessName:     "relay-node",
+				ListenAddresses: []string{"127.0.0.1"},
+				Port:            0,
+				EnableRelay:     true,
+			},
+			wantErr: false,
+			validate: func(t *testing.T, node *Node) {
+				assert.NotNil(t, node.host)
+				assert.True(t, node.config.EnableRelay)
+			},
+		},
+		{
+			name: "node with NAT port mapping enabled",
+			config: Config{
+				ProcessName:      "nat-portmap-node",
+				ListenAddresses:  []string{"127.0.0.1"},
+				Port:             0,
+				EnableNATPortMap: true,
+			},
+			wantErr: false,
+			validate: func(t *testing.T, node *Node) {
+				assert.NotNil(t, node.host)
+				assert.True(t, node.config.EnableNATPortMap)
+			},
+		},
+		{
+			name: "node with all NAT/relay options enabled",
+			config: Config{
+				ProcessName:        "full-nat-node",
+				ListenAddresses:    []string{"127.0.0.1"},
+				Port:               0,
+				EnableNATService:   true,
+				EnableHolePunching: true,
+				EnableRelay:        true,
+				EnableNATPortMap:   true,
+			},
+			wantErr: false,
+			validate: func(t *testing.T, node *Node) {
+				assert.NotNil(t, node.host)
+				assert.True(t, node.config.EnableNATService)
+				assert.True(t, node.config.EnableHolePunching)
+				assert.True(t, node.config.EnableRelay)
+				assert.True(t, node.config.EnableNATPortMap)
+			},
+		},
+		{
+			name: "private network with NAT/relay options",
+			config: Config{
+				ProcessName:        "private-nat-node",
+				ListenAddresses:    []string{"127.0.0.1"},
+				Port:               0,
+				UsePrivateDHT:      true,
+				SharedKey:          "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+				EnableNATService:   true,
+				EnableHolePunching: true,
+				EnableRelay:        true,
+				EnableNATPortMap:   true,
+			},
+			wantErr: false,
+			validate: func(t *testing.T, node *Node) {
+				assert.NotNil(t, node.host)
+				assert.True(t, node.config.UsePrivateDHT)
+				assert.True(t, node.config.EnableNATService)
+				assert.True(t, node.config.EnableHolePunching)
+				assert.True(t, node.config.EnableRelay)
+				assert.True(t, node.config.EnableNATPortMap)
+			},
+		},
 	}
 
 	for _, tt := range tests {

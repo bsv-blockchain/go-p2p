@@ -82,6 +82,18 @@ func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 			libp2p.Identity(*pk),
 		}
 
+		// Add NAT and relay options based on config
+		// EnableNATService and EnableNATPortMap both use NATPortMap, so only add once
+		if config.EnableNATService || config.EnableNATPortMap {
+			opts = append(opts, libp2p.NATPortMap())
+		}
+		if config.EnableHolePunching {
+			opts = append(opts, libp2p.EnableHolePunching())
+		}
+		if config.EnableRelay {
+			opts = append(opts, libp2p.EnableRelay())
+		}
+
 		// If advertise addresses are specified, add them to the options
 		addrsToAdvertise := buildAdvertiseMultiAddrs(logger, config.AdvertiseAddresses, config.Port)
 		if len(addrsToAdvertise) > 0 {
@@ -220,6 +232,18 @@ func setUpPrivateNetwork(logger Logger, config Config, pk *crypto.PrivKey) (host
 		libp2p.ListenAddrStrings(listenMultiAddresses...),
 		libp2p.Identity(*pk),
 		libp2p.PrivateNetwork(psk),
+	}
+
+	// Add NAT and relay options based on config
+	// EnableNATService and EnableNATPortMap both use NATPortMap, so only add once
+	if config.EnableNATService || config.EnableNATPortMap {
+		opts = append(opts, libp2p.NATPortMap())
+	}
+	if config.EnableHolePunching {
+		opts = append(opts, libp2p.EnableHolePunching())
+	}
+	if config.EnableRelay {
+		opts = append(opts, libp2p.EnableRelay())
 	}
 
 	// If advertise addresses are specified, add them to the options
