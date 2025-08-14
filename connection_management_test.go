@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const testLocalhost = "127.0.0.1"
+
 func TestConnectionManagement(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -21,7 +23,7 @@ func TestConnectionManagement(t *testing.T) {
 			name: "Connection manager enabled with defaults",
 			config: Config{
 				ProcessName:       "test-conn-mgr-defaults",
-				ListenAddresses:   []string{"127.0.0.1"},
+				ListenAddresses:   []string{testLocalhost},
 				Port:              0,
 				EnableConnManager: true,
 			},
@@ -30,7 +32,7 @@ func TestConnectionManagement(t *testing.T) {
 			name: "Connection manager with custom values",
 			config: Config{
 				ProcessName:       "test-conn-mgr-custom",
-				ListenAddresses:   []string{"127.0.0.1"},
+				ListenAddresses:   []string{testLocalhost},
 				Port:              0,
 				EnableConnManager: true,
 				ConnLowWater:      50,
@@ -42,7 +44,7 @@ func TestConnectionManagement(t *testing.T) {
 			name: "Connection gater enabled",
 			config: Config{
 				ProcessName:     "test-conn-gater",
-				ListenAddresses: []string{"127.0.0.1"},
+				ListenAddresses: []string{testLocalhost},
 				Port:            0,
 				EnableConnGater: true,
 				MaxConnsPerPeer: 2,
@@ -52,7 +54,7 @@ func TestConnectionManagement(t *testing.T) {
 			name: "Both manager and gater enabled",
 			config: Config{
 				ProcessName:       "test-both",
-				ListenAddresses:   []string{"127.0.0.1"},
+				ListenAddresses:   []string{testLocalhost},
 				Port:              0,
 				EnableConnManager: true,
 				EnableConnGater:   true,
@@ -191,7 +193,7 @@ func TestConnectionManagerWaterMarks(t *testing.T) {
 			logger := &MockLogger{t: t}
 
 			tt.config.ProcessName = "test-water-marks"
-			tt.config.ListenAddresses = []string{"127.0.0.1"}
+			tt.config.ListenAddresses = []string{testLocalhost}
 			tt.config.Port = 0
 
 			node, err := NewNode(ctx, logger, tt.config)
@@ -213,7 +215,7 @@ func TestMultipleNodesWithConnectionManagement(t *testing.T) {
 	// Create first node with connection management
 	config1 := Config{
 		ProcessName:       "node-1",
-		ListenAddresses:   []string{"127.0.0.1"},
+		ListenAddresses:   []string{testLocalhost},
 		Port:              0,
 		EnableConnManager: true,
 		ConnLowWater:      1,
@@ -232,7 +234,7 @@ func TestMultipleNodesWithConnectionManagement(t *testing.T) {
 	// Create second node
 	config2 := Config{
 		ProcessName:       "node-2",
-		ListenAddresses:   []string{"127.0.0.1"},
+		ListenAddresses:   []string{testLocalhost},
 		Port:              0,
 		EnableConnManager: true,
 		ConnLowWater:      1,

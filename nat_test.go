@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const testLocalhost = testLocalhost
+
 // MockLogger implements the Logger interface for testing
 type MockLogger struct {
 	t *testing.T
@@ -45,7 +47,7 @@ func TestNATTraversalConfiguration(t *testing.T) {
 			name: "Basic NAT configuration",
 			config: Config{
 				ProcessName:        "test-nat-basic",
-				ListenAddresses:    []string{"127.0.0.1"},
+				ListenAddresses:    []string{testLocalhost},
 				Port:               0, // Random port
 				EnableNATService:   true,
 				EnableNATPortMap:   true,
@@ -58,7 +60,7 @@ func TestNATTraversalConfiguration(t *testing.T) {
 			name: "AutoNAT v2 enabled",
 			config: Config{
 				ProcessName:        "test-nat-autonat",
-				ListenAddresses:    []string{"127.0.0.1"},
+				ListenAddresses:    []string{testLocalhost},
 				Port:               0,
 				EnableNATService:   true,
 				EnableAutoNATv2:    true,
@@ -69,7 +71,7 @@ func TestNATTraversalConfiguration(t *testing.T) {
 			name: "Force public reachability",
 			config: Config{
 				ProcessName:       "test-nat-public",
-				ListenAddresses:   []string{"127.0.0.1"},
+				ListenAddresses:   []string{testLocalhost},
 				Port:              0,
 				EnableNATService:  true,
 				EnableAutoNATv2:   true,
@@ -80,7 +82,7 @@ func TestNATTraversalConfiguration(t *testing.T) {
 			name: "Force private reachability",
 			config: Config{
 				ProcessName:       "test-nat-private",
-				ListenAddresses:   []string{"127.0.0.1"},
+				ListenAddresses:   []string{testLocalhost},
 				Port:              0,
 				EnableNATService:  true,
 				ForceReachability: "private",
@@ -90,7 +92,7 @@ func TestNATTraversalConfiguration(t *testing.T) {
 			name: "Relay enabled with service",
 			config: Config{
 				ProcessName:        "test-nat-relay",
-				ListenAddresses:    []string{"127.0.0.1"},
+				ListenAddresses:    []string{testLocalhost},
 				Port:               0,
 				EnableRelay:        true,
 				EnableRelayService: true,
@@ -101,7 +103,7 @@ func TestNATTraversalConfiguration(t *testing.T) {
 			name: "Full NAT traversal stack",
 			config: Config{
 				ProcessName:        "test-nat-full",
-				ListenAddresses:    []string{"127.0.0.1"},
+				ListenAddresses:    []string{testLocalhost},
 				Port:               0,
 				EnableNATService:   true,
 				EnableNATPortMap:   true,
@@ -160,7 +162,7 @@ func TestNATConfigurationValidation(t *testing.T) {
 			name: "Valid ForceReachability - public",
 			config: Config{
 				ProcessName:       "test-valid-public",
-				ListenAddresses:   []string{"127.0.0.1"},
+				ListenAddresses:   []string{testLocalhost},
 				Port:              0,
 				ForceReachability: "public",
 			},
@@ -170,7 +172,7 @@ func TestNATConfigurationValidation(t *testing.T) {
 			name: "Valid ForceReachability - private",
 			config: Config{
 				ProcessName:       "test-valid-private",
-				ListenAddresses:   []string{"127.0.0.1"},
+				ListenAddresses:   []string{testLocalhost},
 				Port:              0,
 				ForceReachability: "private",
 			},
@@ -180,7 +182,7 @@ func TestNATConfigurationValidation(t *testing.T) {
 			name: "Valid ForceReachability - auto (empty)",
 			config: Config{
 				ProcessName:       "test-valid-auto",
-				ListenAddresses:   []string{"127.0.0.1"},
+				ListenAddresses:   []string{testLocalhost},
 				Port:              0,
 				ForceReachability: "",
 			},
@@ -190,7 +192,7 @@ func TestNATConfigurationValidation(t *testing.T) {
 			name: "Invalid ForceReachability value",
 			config: Config{
 				ProcessName:       "test-invalid-reach",
-				ListenAddresses:   []string{"127.0.0.1"},
+				ListenAddresses:   []string{testLocalhost},
 				Port:              0,
 				ForceReachability: "invalid", // This will be ignored, defaulting to auto
 			},
@@ -200,7 +202,7 @@ func TestNATConfigurationValidation(t *testing.T) {
 			name: "EnableRelayService without EnableRelay",
 			config: Config{
 				ProcessName:        "test-relay-service-only",
-				ListenAddresses:    []string{"127.0.0.1"},
+				ListenAddresses:    []string{testLocalhost},
 				Port:               0,
 				EnableRelay:        false,
 				EnableRelayService: true, // This will be ignored since EnableRelay is false
@@ -276,7 +278,7 @@ func TestAutoNATv2Integration(t *testing.T) {
 	// Create two nodes - one with AutoNAT v2, one without
 	config1 := Config{
 		ProcessName:     "node-with-autonat",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 		EnableAutoNATv2: true,
 		EnableRelay:     true,
@@ -284,7 +286,7 @@ func TestAutoNATv2Integration(t *testing.T) {
 
 	config2 := Config{
 		ProcessName:     "node-without-autonat",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 		EnableAutoNATv2: false,
 		EnableRelay:     false,

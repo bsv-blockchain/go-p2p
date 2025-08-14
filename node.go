@@ -1592,58 +1592,76 @@ func (s *Node) connectToCachedPeers(ctx context.Context) {
 	successful := 0
 
 	for _, cachedPeer := range bestPeers {
-		// Parse peer ID
-		peerID, err := peer.Decode(cachedPeer.ID)
-		if err != nil {
-			s.logger.Warnf("[Node] Failed to decode cached peer ID %s: %v", cachedPeer.ID, err)
-			s.peerCache.AddOrUpdatePeer(peerID, nil, false)
-			continue
-		}
-
-		// Skip if already connected
-		if s.host.Network().Connectedness(peerID) == network.Connected {
-			successful++
-			continue
-		}
-
-		// Parse addresses
-		var addrs []multiaddr.Multiaddr
-		for _, addrStr := range cachedPeer.Addresses {
-			addr, addrErr := multiaddr.NewMultiaddr(addrStr)
-			if addrErr != nil {
-				s.logger.Debugf("[Node] Failed to parse cached address %s: %v", addrStr, addrErr)
-				continue
-			}
-			addrs = append(addrs, addr)
-		}
-
-		if len(addrs) == 0 {
-			s.logger.Debugf("[Node] No valid addresses for cached peer %s", peerID)
-			s.peerCache.AddOrUpdatePeer(peerID, nil, false)
-			continue
-		}
-
-		// Add addresses to peerstore
-		s.host.Peerstore().AddAddrs(peerID, addrs, time.Hour)
-
-		// Attempt connection with timeout
-		connCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		err = s.host.Connect(connCtx, peer.AddrInfo{
-			ID:    peerID,
-			Addrs: addrs,
-		})
-		cancel()
-
-		if err != nil {
-			s.logger.Debugf("[Node] Failed to connect to cached peer %s: %v", peerID, err)
-			s.peerCache.AddOrUpdatePeer(peerID, nil, false)
-		} else {
-			s.logger.Infof("[Node] Successfully connected to cached peer %s", peerID)
+		if s.connectToCachedPeer(ctx, cachedPeer) {
 			successful++
 		}
 	}
 
 	s.logger.Infof("[Node] Connected to %d/%d cached peers", successful, len(bestPeers))
+}
+
+// connectToCachedPeer attempts to connect to a single cached peer
+func (s *Node) connectToCachedPeer(ctx context.Context, cachedPeer CachedPeer) bool {
+	// Parse peer ID
+	peerID, err := peer.Decode(cachedPeer.ID)
+	if err != nil {
+		s.logger.Warnf("[Node] Failed to decode cached peer ID %s: %v", cachedPeer.ID, err)
+		return false
+	}
+
+	// Skip if already connected
+	if s.host.Network().Connectedness(peerID) == network.Connected {
+		return true
+	}
+
+	// Parse and validate addresses
+	addrs := s.parseCachedAddresses(cachedPeer.Addresses, peerID)
+	if len(addrs) == 0 {
+		return false
+	}
+
+	// Add addresses to peerstore
+	s.host.Peerstore().AddAddrs(peerID, addrs, time.Hour)
+
+	// Attempt connection with timeout
+	if err := s.connectWithTimeout(ctx, peerID, addrs); err != nil {
+		s.logger.Debugf("[Node] Failed to connect to cached peer %s: %v", peerID, err)
+		s.peerCache.AddOrUpdatePeer(peerID, nil, false)
+		return false
+	}
+
+	s.logger.Infof("[Node] Successfully connected to cached peer %s", peerID)
+	return true
+}
+
+// parseCachedAddresses parses multiaddrs from string addresses
+func (s *Node) parseCachedAddresses(addresses []string, peerID peer.ID) []multiaddr.Multiaddr {
+	var addrs []multiaddr.Multiaddr
+	for _, addrStr := range addresses {
+		addr, err := multiaddr.NewMultiaddr(addrStr)
+		if err != nil {
+			s.logger.Debugf("[Node] Failed to parse cached address %s: %v", addrStr, err)
+			continue
+		}
+		addrs = append(addrs, addr)
+	}
+
+	if len(addrs) == 0 {
+		s.logger.Debugf("[Node] No valid addresses for cached peer %s", peerID)
+		s.peerCache.AddOrUpdatePeer(peerID, nil, false)
+	}
+	return addrs
+}
+
+// connectWithTimeout attempts to connect to a peer with a timeout
+func (s *Node) connectWithTimeout(ctx context.Context, peerID peer.ID, addrs []multiaddr.Multiaddr) error {
+	connCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	
+	return s.host.Connect(connCtx, peer.AddrInfo{
+		ID:    peerID,
+		Addrs: addrs,
+	})
 }
 
 // savePeerCache saves the current connected peers to cache
