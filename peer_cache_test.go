@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPeerCache_SaveAndLoad(t *testing.T) {
+func TestPeerCacheSaveAndLoad(t *testing.T) {
 	// Create temp file for cache
 	tmpDir, err := os.MkdirTemp("", "peercache-test")
 	require.NoError(t, err)
@@ -74,7 +74,7 @@ func TestPeerCache_SaveAndLoad(t *testing.T) {
 	assert.Equal(t, 1, foundPeer2.FailureCount)
 }
 
-func TestPeerCache_GetBestPeers(t *testing.T) {
+func TestPeerCacheGetBestPeers(t *testing.T) {
 	cache := NewPeerCache()
 
 	// Generate test peer IDs
@@ -119,7 +119,7 @@ func TestPeerCache_GetBestPeers(t *testing.T) {
 	// peers[1] and peers[4] both have some success, order may vary
 }
 
-func TestPeerCache_Prune(t *testing.T) {
+func TestPeerCachePrune(t *testing.T) {
 	cache := NewPeerCache()
 
 	// Add 10 peers
@@ -139,7 +139,7 @@ func TestPeerCache_Prune(t *testing.T) {
 	assert.Len(t, bestPeers, 5)
 }
 
-func TestPeerCache_TTL(t *testing.T) {
+func TestPeerCacheTTL(t *testing.T) {
 	cache := NewPeerCache()
 
 	// Add a peer with manipulated time
@@ -160,7 +160,7 @@ func TestPeerCache_TTL(t *testing.T) {
 	assert.Empty(t, bestPeers)
 }
 
-func TestPeerCache_RemovePeer(t *testing.T) {
+func TestPeerCacheRemovePeer(t *testing.T) {
 	cache := NewPeerCache()
 
 	// Add peers
