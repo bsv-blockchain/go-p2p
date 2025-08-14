@@ -1636,7 +1636,7 @@ func (s *Node) connectToCachedPeer(ctx context.Context, cachedPeer CachedPeer) b
 
 // parseCachedAddresses parses multiaddrs from string addresses
 func (s *Node) parseCachedAddresses(addresses []string, peerID peer.ID) []multiaddr.Multiaddr {
-	var addrs []multiaddr.Multiaddr
+	addrs := make([]multiaddr.Multiaddr, 0, len(addresses))
 	for _, addrStr := range addresses {
 		addr, err := multiaddr.NewMultiaddr(addrStr)
 		if err != nil {
@@ -1657,7 +1657,7 @@ func (s *Node) parseCachedAddresses(addresses []string, peerID peer.ID) []multia
 func (s *Node) connectWithTimeout(ctx context.Context, peerID peer.ID, addrs []multiaddr.Multiaddr) error {
 	connCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	
+
 	return s.host.Connect(connCtx, peer.AddrInfo{
 		ID:    peerID,
 		Addrs: addrs,

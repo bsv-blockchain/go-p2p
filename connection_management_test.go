@@ -12,8 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const testLocalhost = "127.0.0.1"
-
 func TestConnectionManagement(t *testing.T) {
 	tests := []struct {
 		name   string

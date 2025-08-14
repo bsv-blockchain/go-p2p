@@ -11,8 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const testLocalhost = testLocalhost
-
 // MockLogger implements the Logger interface for testing
 type MockLogger struct {
 	t *testing.T
