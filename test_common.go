@@ -54,3 +54,56 @@ func createBasicConfig(processName string) Config {
 		Port:            0,
 	}
 }
+
+// createAndStartTestNode creates and starts a test node with basic setup
+func createAndStartTestNode(t *testing.T, ctx context.Context, logger Logger, config Config) *Node {
+	t.Helper()
+	
+	node, err := NewNode(ctx, logger, config)
+	if err != nil {
+		t.Fatalf("Failed to create node: %v", err)
+	}
+	
+	if err := node.Start(ctx, nil); err != nil {
+		t.Fatalf("Failed to start node: %v", err)
+	}
+	
+	return node
+}
+
+// verifyNodeRunning verifies a node is running properly
+func verifyNodeRunning(t *testing.T, node *Node, nodeName string) {
+	t.Helper()
+	
+	if node == nil {
+		t.Fatal("Node is nil")
+	}
+	
+	if node.host == nil {
+		t.Fatal("Node host is nil")
+	}
+	
+	if node.host.ID() == "" {
+		t.Fatal("Node host ID is empty")
+	}
+	
+	addrs := node.host.Addrs()
+	if len(addrs) == 0 {
+		t.Fatal("Node should have listening addresses")
+	}
+	
+	t.Logf("Node %s (ID: %s) listening on: %v", nodeName, node.host.ID(), addrs)
+}
+
+// setupNodeCleanup sets up proper cleanup for a test node
+func setupNodeCleanup(t testing.TB, node *Node, ctx context.Context, nodeName string) {
+	t.Helper()
+	
+	t.Cleanup(func() {
+		if node != nil {
+			if err := node.Stop(ctx); err != nil {
+				t.Logf("Failed to stop %s in cleanup: %v", nodeName, err)
+			}
+		}
+	})
+}
