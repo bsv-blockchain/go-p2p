@@ -1232,9 +1232,9 @@ func (s *Node) GetPeerStartingHeight(peerID peer.ID) (int32, bool) {
 	return 0, false
 }
 
-// getIPFromMultiaddr extracts IP address from multiaddr using proper libp2p protocol methods
-// Returns the IP address string and an error if extraction fails
-func getIPFromMultiaddr(addr multiaddr.Multiaddr) (string, error) {
+// GetIPFromMultiaddr extracts IP or DNS address from a multiaddr using proper libp2p protocol methods.
+// Returns the IP address string (or DNS hostname) and an error if extraction fails.
+func GetIPFromMultiaddr(addr multiaddr.Multiaddr) (string, error) {
 	// First try to get DNS component
 	if value, err := addr.ValueForProtocol(multiaddr.P_DNS4); err == nil {
 		return value, nil
@@ -1256,11 +1256,21 @@ func getIPFromMultiaddr(addr multiaddr.Multiaddr) (string, error) {
 	return "", fmt.Errorf("no IP or DNS component found in multiaddr")
 }
 
-// extractIPFromMultiaddr extracts IP address from multiaddr, returns empty string on failure
-// This is a convenience wrapper around getIPFromMultiaddr for cases where error handling is not needed
-func extractIPFromMultiaddr(addr multiaddr.Multiaddr) string {
-	ip, _ := getIPFromMultiaddr(addr)
+// getIPFromMultiaddr is deprecated, use GetIPFromMultiaddr instead
+func getIPFromMultiaddr(addr multiaddr.Multiaddr) (string, error) {
+	return GetIPFromMultiaddr(addr)
+}
+
+// ExtractIPFromMultiaddr extracts IP address from multiaddr, returns empty string on failure
+// This is a convenience wrapper around GetIPFromMultiaddr for cases where error handling is not needed
+func ExtractIPFromMultiaddr(addr multiaddr.Multiaddr) string {
+	ip, _ := GetIPFromMultiaddr(addr)
 	return ip
+}
+
+// extractIPFromMultiaddr is deprecated, use ExtractIPFromMultiaddr instead
+func extractIPFromMultiaddr(addr multiaddr.Multiaddr) string {
+	return ExtractIPFromMultiaddr(addr)
 }
 
 // GetProcessName returns the name of the current process.
@@ -1311,9 +1321,10 @@ func (s *Node) callPeerConnected(ctx context.Context, peerID peer.ID) {
 	}
 }
 
-// isPrivateIP checks if an IP address is private according to RFC 1918 and RFC 3927
-func isPrivateIP(addr multiaddr.Multiaddr) bool {
-	ipStr := extractIPFromMultiaddr(addr)
+// IsPrivateIP checks if a multiaddr contains a private IP address (RFC1918 ranges and loopback)
+// according to RFC 1918 and RFC 3927.
+func IsPrivateIP(addr multiaddr.Multiaddr) bool {
+	ipStr := ExtractIPFromMultiaddr(addr)
 	if ipStr == "" {
 		return false
 	}
@@ -1340,6 +1351,77 @@ func isPrivateIP(addr multiaddr.Multiaddr) bool {
 	}
 
 	return false
+}
+
+// IsPrivateIPString checks if an IP address string is in a private range (RFC1918) or is otherwise non-routable
+func IsPrivateIPString(ipStr string) bool {
+	// Handle IP with port
+	if strings.Contains(ipStr, ":") && !strings.Contains(ipStr, "::") {
+		// IPv4 with port
+		host, _, err := net.SplitHostPort(ipStr)
+		if err == nil {
+			ipStr = host
+		}
+	}
+
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return false
+	}
+
+	// Check for IPv4 private ranges
+	if ip4 := ip.To4(); ip4 != nil {
+		// Loopback (127.0.0.0/8)
+		if ip4[0] == 127 {
+			return true
+		}
+
+		// Private ranges (RFC1918)
+		// 10.0.0.0/8
+		if ip4[0] == 10 {
+			return true
+		}
+
+		// 172.16.0.0/12
+		if ip4[0] == 172 && ip4[1] >= 16 && ip4[1] <= 31 {
+			return true
+		}
+
+		// 192.168.0.0/16
+		if ip4[0] == 192 && ip4[1] == 168 {
+			return true
+		}
+
+		// Link-local (169.254.0.0/16)
+		if ip4[0] == 169 && ip4[1] == 254 {
+			return true
+		}
+
+		return false
+	}
+
+	// Check for IPv6 private/special ranges
+	// Loopback (::1)
+	if ip.IsLoopback() {
+		return true
+	}
+
+	// Link-local (fe80::/10)
+	if ip.IsLinkLocalUnicast() {
+		return true
+	}
+
+	// Unique local (fc00::/7)
+	if len(ip) >= 1 && (ip[0]&0xfe) == 0xfc {
+		return true
+	}
+
+	return false
+}
+
+// isPrivateIP is deprecated, use IsPrivateIP instead
+func isPrivateIP(addr multiaddr.Multiaddr) bool {
+	return IsPrivateIP(addr)
 }
 
 // ConnectToPeer connects to a specific peer using the provided multiaddr string
