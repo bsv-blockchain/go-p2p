@@ -30,7 +30,7 @@ func BenchmarkP2PNode_Publish(b *testing.B) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(b, err)
-	setupNodeCleanup(b, node, ctx, "bench-publish")
+	setupNodeCleanup(ctx, b, node, "bench-publish")
 
 	err = node.Start(ctx, nil, "bench-topic")
 	require.NoError(b, err)
@@ -80,7 +80,7 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 
 	sender, err := NewNode(ctx, logger, config1)
 	require.NoError(b, err)
-	setupNodeCleanup(b, sender, ctx, "bench-sender")
+	setupNodeCleanup(ctx, b, sender, "bench-sender")
 
 	config2 := Config{
 		ProcessName:        "bench-receiver",
@@ -91,7 +91,7 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 
 	receiver, err := NewNode(ctx, logger, config2)
 	require.NoError(b, err)
-	setupNodeCleanup(b, receiver, ctx, "bench-receiver")
+	setupNodeCleanup(ctx, b, receiver, "bench-receiver")
 
 	// Set up stream handler
 	streamHandler := func(stream network.Stream) {
@@ -159,7 +159,7 @@ func BenchmarkP2PNode_ConcurrentConnections(b *testing.B) {
 
 	central, err := NewNode(ctx, logger, centralConfig)
 	require.NoError(b, err)
-	setupNodeCleanup(b, central, ctx, "central")
+	setupNodeCleanup(ctx, b, central, "central")
 
 	err = central.Start(ctx, nil)
 	require.NoError(b, err)

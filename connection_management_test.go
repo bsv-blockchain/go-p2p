@@ -1,7 +1,6 @@
 package p2p
 
 import (
-	"context"
 	"strings"
 	"testing"
 	"time"

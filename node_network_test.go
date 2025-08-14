@@ -34,7 +34,7 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 
 	node1, err := NewNode(ctx, logger, config1)
 	require.NoError(t, err)
-	setupNodeCleanup(t, node1, ctx, "node1")
+	setupNodeCleanup(ctx, t, node1, "node1")
 
 	// Get node1's address for static peer config
 	node1Addr := fmt.Sprintf("%s/p2p/%s", node1.host.Addrs()[0], node1.host.ID())
@@ -50,7 +50,7 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 
 	node2, err := NewNode(ctx, logger, config2)
 	require.NoError(t, err)
-	setupNodeCleanup(t, node2, ctx, "node2")
+	setupNodeCleanup(ctx, t, node2, "node2")
 
 	t.Run("connectToStaticPeers", func(t *testing.T) {
 		// Test connection to static peers

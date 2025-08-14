@@ -22,7 +22,7 @@ func TestP2PNode_TopicOperations(t *testing.T) {
 	config := createBasicConfig("topic-test")
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	setupNodeCleanup(t, node, ctx, "topic-test")
+	setupNodeCleanup(ctx, t, node, "topic-test")
 
 	// Start with some topics
 	err = node.Start(ctx, nil, "topic1", "topic2", "topic3")
@@ -82,7 +82,7 @@ func TestP2PNode_Publishing(t *testing.T) {
 	config := createBasicConfig("publish-test")
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	setupNodeCleanup(t, node, ctx, "publish-test")
+	setupNodeCleanup(ctx, t, node, "publish-test")
 
 	t.Run("Publish before start", func(t *testing.T) {
 		err = node.Publish(ctx, "topic", []byte("message"))

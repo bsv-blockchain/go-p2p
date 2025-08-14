@@ -1,7 +1,6 @@
 package p2p
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -10,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
 
 func TestNATTraversalConfiguration(t *testing.T) {
 	tests := []struct {
