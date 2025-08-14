@@ -42,27 +42,27 @@ func addNATAndRelayOptions(opts []libp2p.Option, config Config) []libp2p.Option 
 	}
 	if config.EnableRelay {
 		opts = append(opts, libp2p.EnableRelay())
-		
+
 		// If relay service is also enabled, allow this node to act as a relay for others
 		if config.EnableRelayService {
 			opts = append(opts, libp2p.EnableRelayService())
 		}
 	}
-	
+
 	// Add AutoNAT v2 support for better address discovery
 	if config.EnableAutoNATv2 {
 		opts = append(opts, libp2p.EnableAutoNATv2())
 	}
-	
+
 	// Force reachability if specified
 	switch config.ForceReachability {
 	case "public":
 		opts = append(opts, libp2p.ForceReachabilityPublic())
 	case "private":
 		opts = append(opts, libp2p.ForceReachabilityPrivate())
-	// Default case (empty string or any other value): auto-detect
+		// Default case (empty string or any other value): auto-detect
 	}
-	
+
 	return opts
 }
 
@@ -74,7 +74,7 @@ func addConnectionManagementOptions(opts []libp2p.Option, config Config, logger 
 		lowWater := config.ConnLowWater
 		highWater := config.ConnHighWater
 		gracePeriod := config.ConnGracePeriod
-		
+
 		if lowWater <= 0 {
 			lowWater = 200 // Default minimum connections
 		}
@@ -87,7 +87,7 @@ func addConnectionManagementOptions(opts []libp2p.Option, config Config, logger 
 		if gracePeriod <= 0 {
 			gracePeriod = 60 * time.Second // Default grace period
 		}
-		
+
 		// Create connection manager with high/low water marks
 		cm, err := connmgr.NewConnManager(lowWater, highWater, connmgr.WithGracePeriod(gracePeriod))
 		if err != nil {
@@ -99,19 +99,19 @@ func addConnectionManagementOptions(opts []libp2p.Option, config Config, logger 
 			logger.Infof("[Node] Connection manager enabled: low=%d, high=%d, grace=%v", lowWater, highWater, gracePeriod)
 		}
 	}
-	
+
 	// Add connection gater if enabled
 	if config.EnableConnGater {
 		maxConnsPerPeer := config.MaxConnsPerPeer
 		if maxConnsPerPeer <= 0 {
 			maxConnsPerPeer = 3 // Default max connections per peer
 		}
-		
+
 		gater := NewConnectionGater(logger, maxConnsPerPeer)
 		opts = append(opts, libp2p.ConnectionGater(gater))
 		logger.Infof("[Node] Connection gater enabled: max connections per peer=%d", maxConnsPerPeer)
 	}
-	
+
 	return opts
 }
 
@@ -170,7 +170,7 @@ func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 
 		// Add NAT and relay options based on config
 		opts = addNATAndRelayOptions(opts, config)
-		
+
 		// Add connection management options
 		opts = addConnectionManagementOptions(opts, config, logger)
 
@@ -351,7 +351,7 @@ func setUpPrivateNetwork(logger Logger, config Config, pk *crypto.PrivKey) (host
 
 	// Add NAT and relay options based on config
 	opts = addNATAndRelayOptions(opts, config)
-	
+
 	// Add connection management options
 	opts = addConnectionManagementOptions(opts, config, logger)
 
@@ -511,7 +511,7 @@ func (s *Node) Start(ctx context.Context, streamHandler func(network.Stream), to
 	// Try connecting to cached peers first if peer cache is enabled
 	if s.peerCache != nil && s.config.EnablePeerCache {
 		go s.connectToCachedPeers(ctx)
-		
+
 		// Start periodic peer cache maintenance
 		go s.startPeerCacheMaintenance(ctx)
 	}
@@ -1661,7 +1661,7 @@ func (s *Node) savePeerCache() error {
 		for _, addr := range addrs {
 			addrStrings = append(addrStrings, addr.String())
 		}
-		
+
 		// Update cache
 		s.peerCache.AddOrUpdatePeer(peerID, addrStrings, true)
 	}

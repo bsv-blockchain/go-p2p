@@ -165,7 +165,7 @@ func (pc *PeerCache) AddOrUpdatePeer(peerID peer.ID, addresses []string, connect
 		ConnectionCount: 0,
 		FailureCount:    0,
 	}
-	
+
 	if connected {
 		newPeer.LastConnected = now
 		newPeer.ConnectionCount = 1
@@ -185,7 +185,7 @@ func (pc *PeerCache) GetBestPeers(limit int, ttl time.Duration) []CachedPeer {
 	// Filter out old peers
 	cutoff := time.Now().Add(-ttl)
 	validPeers := make([]CachedPeer, 0)
-	
+
 	for _, p := range pc.Peers {
 		if p.LastSeen.After(cutoff) && p.FailureCount < 5 {
 			validPeers = append(validPeers, p)
@@ -266,12 +266,12 @@ func (pc *PeerCache) RemovePeer(peerID peer.ID) {
 
 	id := peerID.String()
 	newPeers := make([]CachedPeer, 0, len(pc.Peers))
-	
+
 	for _, p := range pc.Peers {
 		if p.ID != id {
 			newPeers = append(newPeers, p)
 		}
 	}
-	
+
 	pc.Peers = newPeers
 }

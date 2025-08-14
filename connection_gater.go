@@ -58,7 +58,7 @@ func (cg *ConnectionGater) BlockSubnet(subnet string) {
 func (cg *ConnectionGater) isPeerBlocked(p peer.ID) bool {
 	cg.mu.RLock()
 	defer cg.mu.RUnlock()
-	
+
 	if expiry, exists := cg.blockedPeers[p]; exists {
 		if time.Now().Before(expiry) {
 			return true
@@ -84,11 +84,11 @@ func (cg *ConnectionGater) InterceptAddrDial(p peer.ID, addr multiaddr.Multiaddr
 		cg.logger.Debugf("[ConnectionGater] Blocked dial to address %s for peer: %s", addr, p)
 		return false
 	}
-	
+
 	// Check if address is in blocked subnet
 	cg.mu.RLock()
 	defer cg.mu.RUnlock()
-	
+
 	if len(cg.blockedSubnets) > 0 {
 		if ip, err := manet.ToIP(addr); err == nil {
 			ipStr := ip.String()
@@ -100,7 +100,7 @@ func (cg *ConnectionGater) InterceptAddrDial(p peer.ID, addr multiaddr.Multiaddr
 			}
 		}
 	}
-	
+
 	return true
 }
 
@@ -108,10 +108,10 @@ func (cg *ConnectionGater) InterceptAddrDial(p peer.ID, addr multiaddr.Multiaddr
 func (cg *ConnectionGater) InterceptAccept(connAddr network.ConnMultiaddrs) (allow bool) {
 	// Check if remote address is in blocked subnet
 	remoteAddr := connAddr.RemoteMultiaddr()
-	
+
 	cg.mu.RLock()
 	defer cg.mu.RUnlock()
-	
+
 	if len(cg.blockedSubnets) > 0 {
 		if ip, err := manet.ToIP(remoteAddr); err == nil {
 			ipStr := ip.String()
@@ -123,7 +123,7 @@ func (cg *ConnectionGater) InterceptAccept(connAddr network.ConnMultiaddrs) (all
 			}
 		}
 	}
-	
+
 	return true
 }
 
@@ -133,20 +133,20 @@ func (cg *ConnectionGater) InterceptSecured(dir network.Direction, p peer.ID, co
 		cg.logger.Debugf("[ConnectionGater] Blocked secured connection from peer: %s", p)
 		return false
 	}
-	
+
 	// Check connection limit per peer
 	if cg.maxConnsPerPeer > 0 {
 		cg.mu.Lock()
 		defer cg.mu.Unlock()
-		
+
 		if cg.peerConns[p] >= cg.maxConnsPerPeer {
 			cg.logger.Debugf("[ConnectionGater] Peer %s exceeded max connections (%d)", p, cg.maxConnsPerPeer)
 			return false
 		}
-		
+
 		cg.peerConns[p]++
 	}
-	
+
 	return true
 }
 
