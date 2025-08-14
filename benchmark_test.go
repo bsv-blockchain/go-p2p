@@ -30,11 +30,7 @@ func BenchmarkP2PNode_Publish(b *testing.B) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(b, err)
-	defer func(node *Node, ctx context.Context) {
-		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
-			b.Logf("Failed to stop node in cleanup: %v", err)
-		}
-	}(node, ctx)
+	setupNodeCleanup(ctx, b, node, "bench-publish")
 
 	err = node.Start(ctx, nil, "bench-topic")
 	require.NoError(b, err)
@@ -84,11 +80,7 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 
 	sender, err := NewNode(ctx, logger, config1)
 	require.NoError(b, err)
-	defer func(node *Node, ctx context.Context) {
-		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
-			b.Logf("Failed to stop sender node in cleanup: %v", err)
-		}
-	}(sender, ctx)
+	setupNodeCleanup(ctx, b, sender, "bench-sender")
 
 	config2 := Config{
 		ProcessName:        "bench-receiver",
@@ -99,11 +91,7 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 
 	receiver, err := NewNode(ctx, logger, config2)
 	require.NoError(b, err)
-	defer func(node *Node, ctx context.Context) {
-		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
-			b.Logf("Failed to stop receiver node in cleanup: %v", err)
-		}
-	}(receiver, ctx)
+	setupNodeCleanup(ctx, b, receiver, "bench-receiver")
 
 	// Set up stream handler
 	streamHandler := func(stream network.Stream) {
@@ -171,11 +159,7 @@ func BenchmarkP2PNode_ConcurrentConnections(b *testing.B) {
 
 	central, err := NewNode(ctx, logger, centralConfig)
 	require.NoError(b, err)
-	defer func(node *Node, ctx context.Context) {
-		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
-			b.Logf("Failed to stop central node in cleanup: %v", err)
-		}
-	}(central, ctx)
+	setupNodeCleanup(ctx, b, central, "central")
 
 	err = central.Start(ctx, nil)
 	require.NoError(b, err)

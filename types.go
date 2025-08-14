@@ -43,6 +43,7 @@ type Node struct {
 	startTime         time.Time                      // Time when the node was started
 	onPeerConnected   func(context.Context, peer.ID) // Callback for peer connection events
 	callbackMutex     sync.RWMutex                   // Mutex for thread-safe callback access
+	peerCache         *PeerCache                     // Peer cache for persistence across restarts
 
 	// IMPORTANT: The following variables must only be used atomically.
 	bytesReceived       uint64   // Counter for bytes received over the network
@@ -87,6 +88,21 @@ type Config struct {
 	EnableHolePunching bool     // Whether to enable NAT hole punching
 	EnableRelay        bool     // Whether to enable relay functionality
 	EnableNATPortMap   bool     // Whether to enable NAT port mapping
+	EnableAutoNATv2    bool     // Whether to enable AutoNAT v2 for better address discovery
+	ForceReachability  string   // Force reachability: "public", "private", or "" (auto-detect)
+	EnableRelayService bool     // Whether to act as a relay for other nodes (requires EnableRelay)
+	// Peer persistence configuration
+	EnablePeerCache bool          // Whether to enable peer caching for persistence across restarts
+	PeerCacheFile   string        // Path to the peer cache file (default: "~/.p2p/peers.json")
+	MaxCachedPeers  int           // Maximum number of peers to cache (default: 100)
+	PeerCacheTTL    time.Duration // How long to keep cached peers (default: 30 days)
+	// Connection management configuration
+	EnableConnManager bool          // Whether to enable connection manager with high/low water marks
+	ConnLowWater      int           // Minimum number of connections to maintain (default: 200)
+	ConnHighWater     int           // Maximum number of connections before pruning (default: 400)
+	ConnGracePeriod   time.Duration // Grace period before pruning new connections (default: 60s)
+	EnableConnGater   bool          // Whether to enable connection gater for fine-grained control
+	MaxConnsPerPeer   int           // Maximum connections allowed per peer (default: 3)
 }
 
 // Logger defines the interface for logging within the P2P node.
