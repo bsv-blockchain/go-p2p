@@ -27,18 +27,14 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 	// Create first node
 	config1 := Config{
 		ProcessName:        "node1",
-		ListenAddresses:    []string{"127.0.0.1"},
-		AdvertiseAddresses: []string{"127.0.0.1"},
+		ListenAddresses:    []string{testLocalhost},
+		AdvertiseAddresses: []string{testLocalhost},
 		Port:               3111, // Random port
 	}
 
 	node1, err := NewNode(ctx, logger, config1)
 	require.NoError(t, err)
-	defer func() {
-		if err := node1.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
-			t.Logf("Failed to stop node1 in cleanup: %v", err)
-		}
-	}()
+	setupNodeCleanup(t, node1, ctx, "node1")
 
 	// Get node1's address for static peer config
 	node1Addr := fmt.Sprintf("%s/p2p/%s", node1.host.Addrs()[0], node1.host.ID())
@@ -46,19 +42,15 @@ func TestP2PNode_StaticPeerConnection(t *testing.T) {
 	// Create second node with static peer
 	config2 := Config{
 		ProcessName:        "node2",
-		ListenAddresses:    []string{"127.0.0.1"},
-		AdvertiseAddresses: []string{"127.0.0.1"},
+		ListenAddresses:    []string{testLocalhost},
+		AdvertiseAddresses: []string{testLocalhost},
 		Port:               3112,
 		StaticPeers:        []string{node1Addr},
 	}
 
 	node2, err := NewNode(ctx, logger, config2)
 	require.NoError(t, err)
-	defer func() {
-		if err := node2.Stop(ctx); err != nil {
-			t.Logf("Failed to stop node2 in cleanup: %v", err)
-		}
-	}()
+	setupNodeCleanup(t, node2, ctx, "node2")
 
 	t.Run("connectToStaticPeers", func(t *testing.T) {
 		// Test connection to static peers
@@ -93,18 +85,18 @@ func TestP2PNode_ShouldSkipPeer(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		ProcessName:     "skip-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 		OptimiseRetries: false,
 	}
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer func() {
+	t.Cleanup(func() {
 		if err := node.host.Close(); err != nil {
 			t.Logf("Failed to close host in cleanup: %v", err)
 		}
-	}()
+	})
 
 	selfID := node.host.ID()
 	otherID, _ := peer.Decode("12D3KooWGRYZDHBembyGJQqQ6WgLqJWYNjnECJwGBnCg8vbCeo8F")
