@@ -65,10 +65,10 @@ func TestConnectionManagement(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := createTestContext(10 * time.Second)
 			defer cancel()
 
-			logger := &MockLogger{t: t}
+			logger := createTestLogger(t)
 
 			// Create node with connection management configuration
 			node, err := NewNode(ctx, logger, tt.config)
@@ -100,7 +100,7 @@ func TestConnectionManagement(t *testing.T) {
 }
 
 func TestConnectionGater(t *testing.T) {
-	logger := &MockLogger{t: t}
+	logger := createTestLogger(t)
 	gater := NewConnectionGater(logger, 3)
 
 	// Test peer blocking
@@ -130,7 +130,7 @@ func TestConnectionGater(t *testing.T) {
 }
 
 func TestConnectionGaterSubnetBlocking(t *testing.T) {
-	logger := &MockLogger{t: t}
+	logger := createTestLogger(t)
 	gater := NewConnectionGater(logger, 3)
 
 	// Block a subnet
@@ -185,10 +185,10 @@ func TestConnectionManagerWaterMarks(t *testing.T) {
 			// The actual values are used internally by libp2p
 			// We can verify the logic in our function works correctly
 			// by checking the node creates successfully
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx, cancel := createTestContext(5 * time.Second)
 			defer cancel()
 
-			logger := &MockLogger{t: t}
+			logger := createTestLogger(t)
 
 			tt.config.ProcessName = "test-water-marks"
 			tt.config.ListenAddresses = []string{testLocalhost}
@@ -205,10 +205,10 @@ func TestConnectionManagerWaterMarks(t *testing.T) {
 }
 
 func TestMultipleNodesWithConnectionManagement(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := createTestContext(15 * time.Second)
 	defer cancel()
 
-	logger := &MockLogger{t: t}
+	logger := createTestLogger(t)
 
 	// Create first node with connection management
 	config1 := Config{
