@@ -19,19 +19,10 @@ func TestP2PNode_TopicOperations(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	config := Config{
-		ProcessName:     "topic-test",
-		ListenAddresses: []string{"127.0.0.1"},
-		Port:            0,
-	}
-
+	config := createBasicConfig("topic-test")
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer func() {
-		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
-			t.Logf("Failed to stop node in cleanup: %v", err)
-		}
-	}()
+	setupNodeCleanup(t, node, ctx, "topic-test")
 
 	// Start with some topics
 	err = node.Start(ctx, nil, "topic1", "topic2", "topic3")
@@ -88,19 +79,10 @@ func TestP2PNode_Publishing(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	config := Config{
-		ProcessName:     "publish-test",
-		ListenAddresses: []string{"127.0.0.1"},
-		Port:            0,
-	}
-
+	config := createBasicConfig("publish-test")
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer func() {
-		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
-			t.Logf("Failed to stop node in cleanup: %v", err)
-		}
-	}()
+	setupNodeCleanup(t, node, ctx, "publish-test")
 
 	t.Run("Publish before start", func(t *testing.T) {
 		err = node.Publish(ctx, "topic", []byte("message"))
