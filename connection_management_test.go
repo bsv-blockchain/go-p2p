@@ -105,26 +105,26 @@ func TestConnectionGater(t *testing.T) {
 
 	// Test peer blocking
 	testPeer := peer.ID("test-peer-1")
-	
+
 	// Initially peer should not be blocked
 	assert.True(t, gater.InterceptPeerDial(testPeer), "Peer should not be blocked initially")
-	
+
 	// Block the peer for 1 second
 	gater.BlockPeer(testPeer, 1*time.Second)
-	
+
 	// Now peer should be blocked
 	assert.False(t, gater.InterceptPeerDial(testPeer), "Peer should be blocked after BlockPeer")
-	
+
 	// Wait for block to expire
 	time.Sleep(1100 * time.Millisecond)
-	
+
 	// Peer should no longer be blocked
 	assert.True(t, gater.InterceptPeerDial(testPeer), "Peer should not be blocked after expiry")
-	
+
 	// Test unblocking
 	gater.BlockPeer(testPeer, 10*time.Second)
 	assert.False(t, gater.InterceptPeerDial(testPeer), "Peer should be blocked")
-	
+
 	gater.UnblockPeer(testPeer)
 	assert.True(t, gater.InterceptPeerDial(testPeer), "Peer should not be blocked after UnblockPeer")
 }
@@ -132,15 +132,15 @@ func TestConnectionGater(t *testing.T) {
 func TestConnectionGaterSubnetBlocking(t *testing.T) {
 	logger := &MockLogger{t: t}
 	gater := NewConnectionGater(logger, 3)
-	
+
 	// Block a subnet
 	gater.BlockSubnet("192.168.1")
-	
+
 	// Test that the gater is created and functional
-	// Note: Testing actual subnet blocking would require creating multiaddrs
+	// Testing actual subnet blocking would require creating multiaddrs
 	// which is more complex and might require additional setup
 	assert.NotNil(t, gater)
-	assert.Equal(t, 1, len(gater.blockedSubnets))
+	assert.Len(t, gater.blockedSubnets, 1)
 }
 
 func TestConnectionManagerWaterMarks(t *testing.T) {
@@ -189,14 +189,14 @@ func TestConnectionManagerWaterMarks(t *testing.T) {
 			defer cancel()
 
 			logger := &MockLogger{t: t}
-			
+
 			tt.config.ProcessName = "test-water-marks"
 			tt.config.ListenAddresses = []string{"127.0.0.1"}
 			tt.config.Port = 0
 
 			node, err := NewNode(ctx, logger, tt.config)
 			require.NoError(t, err, "Failed to create node")
-			
+
 			if node != nil {
 				_ = node.Stop(ctx)
 			}
@@ -254,7 +254,7 @@ func TestMultipleNodesWithConnectionManagement(t *testing.T) {
 	// Try to connect the nodes
 	// Get the actual network addresses (not just the configured ones)
 	node1NetworkAddrs := node1.host.Network().ListenAddresses()
-	
+
 	// Find a local address to use
 	var localAddrs []multiaddr.Multiaddr
 	for _, addr := range node1NetworkAddrs {
@@ -264,18 +264,18 @@ func TestMultipleNodesWithConnectionManagement(t *testing.T) {
 			localAddrs = append(localAddrs, addr)
 		}
 	}
-	
+
 	// If no good addresses found, skip the test
 	if len(localAddrs) == 0 {
 		t.Skip("No valid local addresses for connection test")
 		return
 	}
-	
+
 	node1Info := peer.AddrInfo{
 		ID:    node1.host.ID(),
 		Addrs: localAddrs,
 	}
-	
+
 	t.Logf("Connecting from node2 to node1 at addresses: %v", localAddrs)
 
 	err = node2.host.Connect(ctx, node1Info)

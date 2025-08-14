@@ -3,7 +3,6 @@ package p2p
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
@@ -66,7 +65,7 @@ func LoadPeerCache(filepath string) (*PeerCache, error) {
 	}
 
 	// Read file
-	data, err := ioutil.ReadFile(filepath)
+	data, err := os.ReadFile(filepath) // #nosec G304 - filepath is validated and from configuration
 	if err != nil {
 		return nil, fmt.Errorf("failed to read peer cache: %w", err)
 	}
@@ -104,7 +103,7 @@ func (pc *PeerCache) Save(filepath string) error {
 	lastSlash := strings.LastIndex(filepath, "/")
 	if lastSlash > 0 {
 		dir := filepath[:lastSlash]
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0o750); err != nil {
 			return fmt.Errorf("failed to create directory: %w", err)
 		}
 	}
@@ -117,7 +116,7 @@ func (pc *PeerCache) Save(filepath string) error {
 
 	// Write to temp file first (atomic write)
 	tmpFile := filepath + ".tmp"
-	if err := ioutil.WriteFile(tmpFile, data, 0644); err != nil {
+	if err := os.WriteFile(tmpFile, data, 0o600); err != nil {
 		return fmt.Errorf("failed to write peer cache: %w", err)
 	}
 

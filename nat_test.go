@@ -68,22 +68,22 @@ func TestNATTraversalConfiguration(t *testing.T) {
 		{
 			name: "Force public reachability",
 			config: Config{
-				ProcessName:        "test-nat-public",
-				ListenAddresses:    []string{"127.0.0.1"},
-				Port:               0,
-				EnableNATService:   true,
-				EnableAutoNATv2:    true,
-				ForceReachability:  "public",
+				ProcessName:       "test-nat-public",
+				ListenAddresses:   []string{"127.0.0.1"},
+				Port:              0,
+				EnableNATService:  true,
+				EnableAutoNATv2:   true,
+				ForceReachability: "public",
 			},
 		},
 		{
 			name: "Force private reachability",
 			config: Config{
-				ProcessName:        "test-nat-private",
-				ListenAddresses:    []string{"127.0.0.1"},
-				Port:               0,
-				EnableNATService:   true,
-				ForceReachability:  "private",
+				ProcessName:       "test-nat-private",
+				ListenAddresses:   []string{"127.0.0.1"},
+				Port:              0,
+				EnableNATService:  true,
+				ForceReachability: "private",
 			},
 		},
 		{
@@ -217,7 +217,7 @@ func TestNATConfigurationValidation(t *testing.T) {
 			logger := &MockLogger{t: t}
 
 			node, err := NewNode(ctx, logger, tt.config)
-			
+
 			if tt.shouldErr {
 				assert.Error(t, err, "Expected error but got none")
 			} else {
@@ -235,16 +235,16 @@ func TestNATOptionsIntegration(t *testing.T) {
 	// Test that NAT options are properly integrated into libp2p options
 	configs := []Config{
 		{
-			EnableNATService:   true,
-			EnableNATPortMap:   false,
+			EnableNATService: true,
+			EnableNATPortMap: false,
 		},
 		{
-			EnableNATService:   false,
-			EnableNATPortMap:   true,
+			EnableNATService: false,
+			EnableNATPortMap: true,
 		},
 		{
-			EnableNATService:   true,
-			EnableNATPortMap:   true,
+			EnableNATService: true,
+			EnableNATPortMap: true,
 		},
 	}
 
@@ -252,12 +252,12 @@ func TestNATOptionsIntegration(t *testing.T) {
 		t.Run(fmt.Sprintf("config_%d", i), func(t *testing.T) {
 			opts := []libp2p.Option{}
 			resultOpts := addNATAndRelayOptions(opts, config)
-			
+
 			// Check that options were added
-			// Note: We can't directly inspect libp2p.Option values,
+			// We can't directly inspect libp2p.Option values,
 			// but we can verify the function doesn't panic
 			assert.NotNil(t, resultOpts)
-			
+
 			// Verify that NATPortMap is added if either EnableNATService or EnableNATPortMap is true
 			if config.EnableNATService || config.EnableNATPortMap {
 				// At least one NAT option should be added
@@ -275,16 +275,16 @@ func TestAutoNATv2Integration(t *testing.T) {
 
 	// Create two nodes - one with AutoNAT v2, one without
 	config1 := Config{
-		ProcessName:      "node-with-autonat",
-		ListenAddresses:  []string{"127.0.0.1"},
+		ProcessName:     "node-with-autonat",
+		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
 		EnableAutoNATv2: true,
 		EnableRelay:     true,
 	}
 
 	config2 := Config{
-		ProcessName:      "node-without-autonat",
-		ListenAddresses:  []string{"127.0.0.1"},
+		ProcessName:     "node-without-autonat",
+		ListenAddresses: []string{"127.0.0.1"},
 		Port:            0,
 		EnableAutoNATv2: false,
 		EnableRelay:     false,
@@ -307,7 +307,7 @@ func TestAutoNATv2Integration(t *testing.T) {
 
 	// Nodes should be able to start with different NAT configurations
 	assert.NotEqual(t, node1.host.ID(), node2.host.ID())
-	
+
 	// Both should have addresses
 	assert.NotEmpty(t, node1.host.Addrs())
 	assert.NotEmpty(t, node2.host.Addrs())

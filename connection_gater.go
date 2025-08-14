@@ -128,7 +128,7 @@ func (cg *ConnectionGater) InterceptAccept(connAddr network.ConnMultiaddrs) (all
 }
 
 // InterceptSecured is called after the handshake
-func (cg *ConnectionGater) InterceptSecured(dir network.Direction, p peer.ID, connAddr network.ConnMultiaddrs) (allow bool) {
+func (cg *ConnectionGater) InterceptSecured(_ network.Direction, p peer.ID, _ network.ConnMultiaddrs) (allow bool) {
 	if cg.isPeerBlocked(p) {
 		cg.logger.Debugf("[ConnectionGater] Blocked secured connection from peer: %s", p)
 		return false
@@ -151,8 +151,8 @@ func (cg *ConnectionGater) InterceptSecured(dir network.Direction, p peer.ID, co
 }
 
 // InterceptUpgraded is called after protocol negotiation
-func (cg *ConnectionGater) InterceptUpgraded(conn network.Conn) (allow bool, reason control.DisconnectReason) {
-	// Note: Connection cleanup happens periodically or when new connections are attempted
+func (cg *ConnectionGater) InterceptUpgraded(_ network.Conn) (allow bool, reason control.DisconnectReason) {
+	// Connection cleanup happens periodically or when new connections are attempted
 	// We can't reliably track connection closes from the gater
 	return true, 0
 }

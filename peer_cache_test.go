@@ -110,7 +110,7 @@ func TestPeerCache_GetBestPeers(t *testing.T) {
 
 	// Get best peers
 	bestPeers := cache.GetBestPeers(3, DefaultCacheTTL)
-	
+
 	// Should get 3 peers (peers[3] filtered out due to 5 failures)
 	assert.Len(t, bestPeers, 3)
 
@@ -155,9 +155,9 @@ func TestPeerCache_TTL(t *testing.T) {
 
 	// Get best peers with 30 day TTL
 	bestPeers := cache.GetBestPeers(10, 30*24*time.Hour)
-	
+
 	// Old peer should be filtered out
-	assert.Len(t, bestPeers, 0)
+	assert.Empty(t, bestPeers)
 }
 
 func TestPeerCache_RemovePeer(t *testing.T) {
@@ -181,7 +181,7 @@ func TestPeerCache_RemovePeer(t *testing.T) {
 	// Check remaining peers
 	bestPeers := cache.GetBestPeers(10, DefaultCacheTTL)
 	assert.Len(t, bestPeers, 2)
-	
+
 	foundPeer2 := false
 	for _, p := range bestPeers {
 		if p.ID == peer2.String() {

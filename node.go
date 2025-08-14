@@ -1609,9 +1609,9 @@ func (s *Node) connectToCachedPeers(ctx context.Context) {
 		// Parse addresses
 		var addrs []multiaddr.Multiaddr
 		for _, addrStr := range cachedPeer.Addresses {
-			addr, err := multiaddr.NewMultiaddr(addrStr)
-			if err != nil {
-				s.logger.Debugf("[Node] Failed to parse cached address %s: %v", addrStr, err)
+			addr, addrErr := multiaddr.NewMultiaddr(addrStr)
+			if addrErr != nil {
+				s.logger.Debugf("[Node] Failed to parse cached address %s: %v", addrStr, addrErr)
 				continue
 			}
 			addrs = append(addrs, addr)
