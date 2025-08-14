@@ -25,6 +25,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/protocol"
 	dRouting "github.com/libp2p/go-libp2p/p2p/discovery/routing"
 	dUtil "github.com/libp2p/go-libp2p/p2p/discovery/util"
+	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 	"github.com/multiformats/go-multiaddr"
 	"golang.org/x/sync/errgroup"
 )
@@ -41,7 +42,76 @@ func addNATAndRelayOptions(opts []libp2p.Option, config Config) []libp2p.Option 
 	}
 	if config.EnableRelay {
 		opts = append(opts, libp2p.EnableRelay())
+		
+		// If relay service is also enabled, allow this node to act as a relay for others
+		if config.EnableRelayService {
+			opts = append(opts, libp2p.EnableRelayService())
+		}
 	}
+	
+	// Add AutoNAT v2 support for better address discovery
+	if config.EnableAutoNATv2 {
+		opts = append(opts, libp2p.EnableAutoNATv2())
+	}
+	
+	// Force reachability if specified
+	switch config.ForceReachability {
+	case "public":
+		opts = append(opts, libp2p.ForceReachabilityPublic())
+	case "private":
+		opts = append(opts, libp2p.ForceReachabilityPrivate())
+	// Default case (empty string or any other value): auto-detect
+	}
+	
+	return opts
+}
+
+// addConnectionManagementOptions adds connection management options to the libp2p configuration
+func addConnectionManagementOptions(opts []libp2p.Option, config Config, logger Logger) []libp2p.Option {
+	// Add connection manager if enabled
+	if config.EnableConnManager {
+		// Set defaults if not configured
+		lowWater := config.ConnLowWater
+		highWater := config.ConnHighWater
+		gracePeriod := config.ConnGracePeriod
+		
+		if lowWater <= 0 {
+			lowWater = 200 // Default minimum connections
+		}
+		if highWater <= 0 {
+			highWater = 400 // Default maximum connections
+		}
+		if highWater <= lowWater {
+			highWater = lowWater + 100 // Ensure high water is higher than low water
+		}
+		if gracePeriod <= 0 {
+			gracePeriod = 60 * time.Second // Default grace period
+		}
+		
+		// Create connection manager with high/low water marks
+		cm, err := connmgr.NewConnManager(lowWater, highWater, connmgr.WithGracePeriod(gracePeriod))
+		if err != nil {
+			// If we can't create the connection manager, just skip it
+			// This shouldn't happen with valid parameters, but better safe than sorry
+			logger.Warnf("[Node] Failed to create connection manager: %v", err)
+		} else {
+			opts = append(opts, libp2p.ConnectionManager(cm))
+			logger.Infof("[Node] Connection manager enabled: low=%d, high=%d, grace=%v", lowWater, highWater, gracePeriod)
+		}
+	}
+	
+	// Add connection gater if enabled
+	if config.EnableConnGater {
+		maxConnsPerPeer := config.MaxConnsPerPeer
+		if maxConnsPerPeer <= 0 {
+			maxConnsPerPeer = 3 // Default max connections per peer
+		}
+		
+		gater := NewConnectionGater(logger, maxConnsPerPeer)
+		opts = append(opts, libp2p.ConnectionGater(gater))
+		logger.Infof("[Node] Connection gater enabled: max connections per peer=%d", maxConnsPerPeer)
+	}
+	
 	return opts
 }
 
@@ -100,6 +170,9 @@ func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 
 		// Add NAT and relay options based on config
 		opts = addNATAndRelayOptions(opts, config)
+		
+		// Add connection management options
+		opts = addConnectionManagementOptions(opts, config, logger)
 
 		// If advertise addresses are specified, add them to the options
 		addrsToAdvertise := buildAdvertiseMultiAddrs(logger, config.AdvertiseAddresses, config.Port)
@@ -175,6 +248,30 @@ func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 		peerConnTimes:     sync.Map{},
 	}
 
+	// Initialize peer cache if enabled
+	if config.EnablePeerCache {
+		// Set defaults if not specified
+		if config.PeerCacheFile == "" {
+			config.PeerCacheFile = "~/.p2p/peers.json"
+		}
+		if config.MaxCachedPeers == 0 {
+			config.MaxCachedPeers = DefaultMaxCachedPeers
+		}
+		if config.PeerCacheTTL == 0 {
+			config.PeerCacheTTL = DefaultCacheTTL
+		}
+
+		// Load peer cache from disk
+		cache, err := LoadPeerCache(config.PeerCacheFile)
+		if err != nil {
+			logger.Warnf("[Node] Failed to load peer cache: %v", err)
+			cache = NewPeerCache()
+		} else {
+			logger.Infof("[Node] Loaded %d peers from cache", cache.Count())
+		}
+		node.peerCache = cache
+	}
+
 	// Set up connection notifications
 	h.Network().Notify(&network.NotifyBundle{
 		ConnectedF: func(_ network.Network, conn network.Conn) {
@@ -183,6 +280,17 @@ func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 
 			// Store connection time
 			node.peerConnTimes.Store(peerID, time.Now())
+
+			// Update peer cache if enabled
+			if node.peerCache != nil {
+				// Get peer addresses from peerstore
+				addrs := h.Peerstore().Addrs(peerID)
+				addrStrings := make([]string, 0, len(addrs))
+				for _, addr := range addrs {
+					addrStrings = append(addrStrings, addr.String())
+				}
+				node.peerCache.AddOrUpdatePeer(peerID, addrStrings, true)
+			}
 
 			// Notify any connection handlers about the new peer
 			node.callPeerConnected(context.Background(), peerID)
@@ -243,6 +351,9 @@ func setUpPrivateNetwork(logger Logger, config Config, pk *crypto.PrivKey) (host
 
 	// Add NAT and relay options based on config
 	opts = addNATAndRelayOptions(opts, config)
+	
+	// Add connection management options
+	opts = addConnectionManagementOptions(opts, config, logger)
 
 	// If advertise addresses are specified, add them to the options
 	addrsToAdvertise := buildAdvertiseMultiAddrs(logger, config.AdvertiseAddresses, config.Port)
@@ -397,6 +508,14 @@ func (s *Node) initGossipSub(ctx context.Context, topicNames []string) error {
 func (s *Node) Start(ctx context.Context, streamHandler func(network.Stream), topicNames ...string) error {
 	s.logger.Infof("[%s] starting", s.config.ProcessName)
 
+	// Try connecting to cached peers first if peer cache is enabled
+	if s.peerCache != nil && s.config.EnablePeerCache {
+		go s.connectToCachedPeers(ctx)
+		
+		// Start periodic peer cache maintenance
+		go s.startPeerCacheMaintenance(ctx)
+	}
+
 	s.startStaticPeerConnector(ctx)
 
 	go func() {
@@ -459,6 +578,15 @@ func subscribeToTopics(topicNames []string, ps *pubsub.PubSub, s *Node) (map[str
 // Stop gracefully shuts down the P2P node and closes all connections.
 func (s *Node) Stop(_ context.Context) error {
 	s.logger.Infof("[Node] stopping")
+
+	// Save peer cache before shutting down
+	if s.peerCache != nil && s.config.EnablePeerCache {
+		if err := s.savePeerCache(); err != nil {
+			s.logger.Warnf("[Node] Failed to save peer cache: %v", err)
+		} else {
+			s.logger.Infof("[Node] Saved %d peers to cache", s.peerCache.Count())
+		}
+	}
 
 	// Close the underlying libp2p host
 	if s.host != nil {
@@ -1445,4 +1573,127 @@ func (s *Node) ConnectToPeer(ctx context.Context, peerAddr string) error {
 	}
 
 	return nil
+}
+
+// connectToCachedPeers attempts to connect to peers from the cache
+func (s *Node) connectToCachedPeers(ctx context.Context) {
+	if s.peerCache == nil {
+		return
+	}
+
+	// Get best peers from cache
+	bestPeers := s.peerCache.GetBestPeers(s.config.MaxCachedPeers/2, s.config.PeerCacheTTL)
+	if len(bestPeers) == 0 {
+		s.logger.Infof("[Node] No cached peers to connect to")
+		return
+	}
+
+	s.logger.Infof("[Node] Attempting to connect to %d cached peers", len(bestPeers))
+	successful := 0
+
+	for _, cachedPeer := range bestPeers {
+		// Parse peer ID
+		peerID, err := peer.Decode(cachedPeer.ID)
+		if err != nil {
+			s.logger.Warnf("[Node] Failed to decode cached peer ID %s: %v", cachedPeer.ID, err)
+			s.peerCache.AddOrUpdatePeer(peerID, nil, false)
+			continue
+		}
+
+		// Skip if already connected
+		if s.host.Network().Connectedness(peerID) == network.Connected {
+			successful++
+			continue
+		}
+
+		// Parse addresses
+		var addrs []multiaddr.Multiaddr
+		for _, addrStr := range cachedPeer.Addresses {
+			addr, err := multiaddr.NewMultiaddr(addrStr)
+			if err != nil {
+				s.logger.Debugf("[Node] Failed to parse cached address %s: %v", addrStr, err)
+				continue
+			}
+			addrs = append(addrs, addr)
+		}
+
+		if len(addrs) == 0 {
+			s.logger.Debugf("[Node] No valid addresses for cached peer %s", peerID)
+			s.peerCache.AddOrUpdatePeer(peerID, nil, false)
+			continue
+		}
+
+		// Add addresses to peerstore
+		s.host.Peerstore().AddAddrs(peerID, addrs, time.Hour)
+
+		// Attempt connection with timeout
+		connCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		err = s.host.Connect(connCtx, peer.AddrInfo{
+			ID:    peerID,
+			Addrs: addrs,
+		})
+		cancel()
+
+		if err != nil {
+			s.logger.Debugf("[Node] Failed to connect to cached peer %s: %v", peerID, err)
+			s.peerCache.AddOrUpdatePeer(peerID, nil, false)
+		} else {
+			s.logger.Infof("[Node] Successfully connected to cached peer %s", peerID)
+			successful++
+		}
+	}
+
+	s.logger.Infof("[Node] Connected to %d/%d cached peers", successful, len(bestPeers))
+}
+
+// savePeerCache saves the current connected peers to cache
+func (s *Node) savePeerCache() error {
+	if s.peerCache == nil {
+		return nil
+	}
+
+	// Update cache with current peers
+	peers := s.host.Network().Peers()
+	for _, peerID := range peers {
+		// Get peer addresses
+		addrs := s.host.Peerstore().Addrs(peerID)
+		addrStrings := make([]string, 0, len(addrs))
+		for _, addr := range addrs {
+			addrStrings = append(addrStrings, addr.String())
+		}
+		
+		// Update cache
+		s.peerCache.AddOrUpdatePeer(peerID, addrStrings, true)
+	}
+
+	// Prune old peers
+	s.peerCache.Prune(s.config.MaxCachedPeers, s.config.PeerCacheTTL)
+
+	// Save to disk
+	return s.peerCache.Save(s.config.PeerCacheFile)
+}
+
+// startPeerCacheMaintenance starts periodic saving of peer cache
+func (s *Node) startPeerCacheMaintenance(ctx context.Context) {
+	if s.peerCache == nil {
+		return
+	}
+
+	ticker := time.NewTicker(5 * time.Minute) // Save every 5 minutes
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			// Save one last time before shutdown
+			_ = s.savePeerCache()
+			return
+		case <-ticker.C:
+			if err := s.savePeerCache(); err != nil {
+				s.logger.Warnf("[Node] Failed to save peer cache: %v", err)
+			} else {
+				s.logger.Debugf("[Node] Saved %d peers to cache", s.peerCache.Count())
+			}
+		}
+	}
 }
