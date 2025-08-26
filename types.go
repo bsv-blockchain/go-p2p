@@ -45,6 +45,10 @@ type Node struct {
 	callbackMutex     sync.RWMutex                   // Mutex for thread-safe callback access
 	peerCache         *PeerCache                     // Peer cache for persistence across restarts
 
+	ctx    context.Context    // Internal context for managing goroutines
+	cancel context.CancelFunc // Cancel function for the internal context
+	wg     sync.WaitGroup     // WaitGroup for tracking background goroutines
+
 	// IMPORTANT: The following variables must only be used atomically.
 	bytesReceived       uint64   // Counter for bytes received over the network
 	bytesSent           uint64   // Counter for bytes sent over the network

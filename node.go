@@ -425,7 +425,10 @@ func (s *Node) startStaticPeerConnector(ctx context.Context) {
 		return
 	}
 
+	s.wg.Add(1)
 	go func() {
+		defer s.wg.Done()
+
 		logged := false
 
 		delay := 0 * time.Second
@@ -508,23 +511,35 @@ func (s *Node) initGossipSub(ctx context.Context, topicNames []string) error {
 func (s *Node) Start(ctx context.Context, streamHandler func(network.Stream), topicNames ...string) error {
 	s.logger.Infof("[%s] starting", s.config.ProcessName)
 
+	s.ctx, s.cancel = context.WithCancel(ctx)
+
 	// Try connecting to cached peers first if peer cache is enabled
 	if s.peerCache != nil && s.config.EnablePeerCache {
-		go s.connectToCachedPeers(ctx)
+		s.wg.Add(1)
+		go func() {
+			defer s.wg.Done()
+			s.connectToCachedPeers(s.ctx)
+		}()
 
 		// Start periodic peer cache maintenance
-		go s.startPeerCacheMaintenance(ctx)
+		s.wg.Add(1)
+		go func() {
+			defer s.wg.Done()
+			s.startPeerCacheMaintenance(s.ctx)
+		}()
 	}
 
-	s.startStaticPeerConnector(ctx)
+	s.startStaticPeerConnector(s.ctx)
 
+	s.wg.Add(1)
 	go func() {
-		if err := s.discoverPeers(ctx, topicNames); err != nil && !errors.Is(err, context.Canceled) {
+		defer s.wg.Done()
+		if err := s.discoverPeers(s.ctx, topicNames); err != nil && !errors.Is(err, context.Canceled) {
 			s.logger.Warnf("[Node] error discovering peers: %v", err)
 		}
 	}()
 
-	if err := s.initGossipSub(ctx, topicNames); err != nil {
+	if err := s.initGossipSub(s.ctx, topicNames); err != nil {
 		return err
 	}
 
@@ -578,6 +593,12 @@ func subscribeToTopics(topicNames []string, ps *pubsub.PubSub, s *Node) (map[str
 // Stop gracefully shuts down the P2P node and closes all connections.
 func (s *Node) Stop(_ context.Context) error {
 	s.logger.Infof("[Node] stopping")
+
+	if s.cancel != nil {
+		s.cancel()
+	}
+
+	s.wg.Wait()
 
 	// Save peer cache before shutting down
 	if s.peerCache != nil && s.config.EnablePeerCache {
