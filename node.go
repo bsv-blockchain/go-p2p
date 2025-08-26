@@ -511,35 +511,36 @@ func (s *Node) initGossipSub(ctx context.Context, topicNames []string) error {
 func (s *Node) Start(ctx context.Context, streamHandler func(network.Stream), topicNames ...string) error {
 	s.logger.Infof("[%s] starting", s.config.ProcessName)
 
-	s.ctx, s.cancel = context.WithCancel(ctx)
+	internalCtx, cancel := context.WithCancel(ctx)
+	s.cancel = cancel
 
 	// Try connecting to cached peers first if peer cache is enabled
 	if s.peerCache != nil && s.config.EnablePeerCache {
 		s.wg.Add(1)
 		go func() {
 			defer s.wg.Done()
-			s.connectToCachedPeers(s.ctx)
+			s.connectToCachedPeers(internalCtx)
 		}()
 
 		// Start periodic peer cache maintenance
 		s.wg.Add(1)
 		go func() {
 			defer s.wg.Done()
-			s.startPeerCacheMaintenance(s.ctx)
+			s.startPeerCacheMaintenance(internalCtx)
 		}()
 	}
 
-	s.startStaticPeerConnector(s.ctx)
+	s.startStaticPeerConnector(internalCtx)
 
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
-		if err := s.discoverPeers(s.ctx, topicNames); err != nil && !errors.Is(err, context.Canceled) {
+		if err := s.discoverPeers(internalCtx, topicNames); err != nil && !errors.Is(err, context.Canceled) {
 			s.logger.Warnf("[Node] error discovering peers: %v", err)
 		}
 	}()
 
-	if err := s.initGossipSub(s.ctx, topicNames); err != nil {
+	if err := s.initGossipSub(internalCtx, topicNames); err != nil {
 		return err
 	}
 
