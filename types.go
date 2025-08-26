@@ -43,7 +43,11 @@ type Node struct {
 	startTime         time.Time                      // Time when the node was started
 	onPeerConnected   func(context.Context, peer.ID) // Callback for peer connection events
 	callbackMutex     sync.RWMutex                   // Mutex for thread-safe callback access
+	lifecycleMutex    sync.Mutex                     // Mutex for thread-safe lifecycle operations (Start/Stop)
 	peerCache         *PeerCache                     // Peer cache for persistence across restarts
+
+	cancel context.CancelFunc // Cancel function for the internal context
+	wg     sync.WaitGroup     // WaitGroup for tracking background goroutines
 
 	// IMPORTANT: The following variables must only be used atomically.
 	bytesReceived       uint64   // Counter for bytes received over the network

@@ -425,7 +425,10 @@ func (s *Node) startStaticPeerConnector(ctx context.Context) {
 		return
 	}
 
+	s.wg.Add(1)
 	go func() {
+		defer s.wg.Done()
+
 		logged := false
 
 		delay := 0 * time.Second
@@ -508,23 +511,45 @@ func (s *Node) initGossipSub(ctx context.Context, topicNames []string) error {
 func (s *Node) Start(ctx context.Context, streamHandler func(network.Stream), topicNames ...string) error {
 	s.logger.Infof("[%s] starting", s.config.ProcessName)
 
-	// Try connecting to cached peers first if peer cache is enabled
-	if s.peerCache != nil && s.config.EnablePeerCache {
-		go s.connectToCachedPeers(ctx)
+	// Protect lifecycle operations with mutex to prevent race conditions
+	s.lifecycleMutex.Lock()
+	defer s.lifecycleMutex.Unlock()
 
-		// Start periodic peer cache maintenance
-		go s.startPeerCacheMaintenance(ctx)
+	// If there's already a cancel function, call it to clean up previous start
+	if s.cancel != nil {
+		s.cancel()
 	}
 
-	s.startStaticPeerConnector(ctx)
+	internalCtx, cancel := context.WithCancel(ctx)
+	s.cancel = cancel
 
+	// Try connecting to cached peers first if peer cache is enabled
+	if s.peerCache != nil && s.config.EnablePeerCache {
+		s.wg.Add(1)
+		go func() {
+			defer s.wg.Done()
+			s.connectToCachedPeers(internalCtx)
+		}()
+
+		// Start periodic peer cache maintenance
+		s.wg.Add(1)
+		go func() {
+			defer s.wg.Done()
+			s.startPeerCacheMaintenance(internalCtx)
+		}()
+	}
+
+	s.startStaticPeerConnector(internalCtx)
+
+	s.wg.Add(1)
 	go func() {
-		if err := s.discoverPeers(ctx, topicNames); err != nil && !errors.Is(err, context.Canceled) {
+		defer s.wg.Done()
+		if err := s.discoverPeers(internalCtx, topicNames); err != nil && !errors.Is(err, context.Canceled) {
 			s.logger.Warnf("[Node] error discovering peers: %v", err)
 		}
 	}()
 
-	if err := s.initGossipSub(ctx, topicNames); err != nil {
+	if err := s.initGossipSub(internalCtx, topicNames); err != nil {
 		return err
 	}
 
@@ -578,6 +603,16 @@ func subscribeToTopics(topicNames []string, ps *pubsub.PubSub, s *Node) (map[str
 // Stop gracefully shuts down the P2P node and closes all connections.
 func (s *Node) Stop(_ context.Context) error {
 	s.logger.Infof("[Node] stopping")
+
+	// Protect lifecycle operations with mutex to prevent race conditions
+	s.lifecycleMutex.Lock()
+	if s.cancel != nil {
+		s.cancel()
+		s.cancel = nil // Clear the cancel function after calling it
+	}
+	s.lifecycleMutex.Unlock()
+
+	s.wg.Wait()
 
 	// Save peer cache before shutting down
 	if s.peerCache != nil && s.config.EnablePeerCache {
@@ -918,7 +953,7 @@ func (s *Node) discoverPeers(ctx context.Context, topicNames []string) error {
 	}
 }
 
-func (s *Node) findPeers(ctx context.Context, topicName string, routingDiscovery *dRouting.RoutingDiscovery, peerAddrMap *sync.Map, peerAddrErrorMap *sync.Map) error {
+func (s *Node) findPeers(ctx context.Context, topicName string, routingDiscovery *dRouting.RoutingDiscovery, peerAddrMap, peerAddrErrorMap *sync.Map) error {
 	// Find peers subscribed to the topic
 	addrChan, err := routingDiscovery.FindPeers(ctx, topicName)
 	if err != nil {
@@ -1026,7 +1061,7 @@ func (s *Node) shouldSkipNoGoodAddresses(addr peer.AddrInfo) bool {
 }
 
 // attemptConnection tries to connect to a peer if it hasn't been attempted already
-func (s *Node) attemptConnection(ctx context.Context, peerAddr peer.AddrInfo, peerAddrMap *sync.Map, peerAddrErrorMap *sync.Map) {
+func (s *Node) attemptConnection(ctx context.Context, peerAddr peer.AddrInfo, peerAddrMap, peerAddrErrorMap *sync.Map) {
 	if _, ok := peerAddrMap.Load(peerAddr.ID.String()); ok {
 		return
 	}
