@@ -511,6 +511,15 @@ func (s *Node) initGossipSub(ctx context.Context, topicNames []string) error {
 func (s *Node) Start(ctx context.Context, streamHandler func(network.Stream), topicNames ...string) error {
 	s.logger.Infof("[%s] starting", s.config.ProcessName)
 
+	// Protect lifecycle operations with mutex to prevent race conditions
+	s.lifecycleMutex.Lock()
+	defer s.lifecycleMutex.Unlock()
+
+	// If there's already a cancel function, call it to clean up previous start
+	if s.cancel != nil {
+		s.cancel()
+	}
+
 	internalCtx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
 
@@ -595,9 +604,13 @@ func subscribeToTopics(topicNames []string, ps *pubsub.PubSub, s *Node) (map[str
 func (s *Node) Stop(_ context.Context) error {
 	s.logger.Infof("[Node] stopping")
 
+	// Protect lifecycle operations with mutex to prevent race conditions
+	s.lifecycleMutex.Lock()
 	if s.cancel != nil {
 		s.cancel()
+		s.cancel = nil // Clear the cancel function after calling it
 	}
+	s.lifecycleMutex.Unlock()
 
 	s.wg.Wait()
 
@@ -940,7 +953,7 @@ func (s *Node) discoverPeers(ctx context.Context, topicNames []string) error {
 	}
 }
 
-func (s *Node) findPeers(ctx context.Context, topicName string, routingDiscovery *dRouting.RoutingDiscovery, peerAddrMap *sync.Map, peerAddrErrorMap *sync.Map) error {
+func (s *Node) findPeers(ctx context.Context, topicName string, routingDiscovery *dRouting.RoutingDiscovery, peerAddrMap, peerAddrErrorMap *sync.Map) error {
 	// Find peers subscribed to the topic
 	addrChan, err := routingDiscovery.FindPeers(ctx, topicName)
 	if err != nil {
@@ -1048,7 +1061,7 @@ func (s *Node) shouldSkipNoGoodAddresses(addr peer.AddrInfo) bool {
 }
 
 // attemptConnection tries to connect to a peer if it hasn't been attempted already
-func (s *Node) attemptConnection(ctx context.Context, peerAddr peer.AddrInfo, peerAddrMap *sync.Map, peerAddrErrorMap *sync.Map) {
+func (s *Node) attemptConnection(ctx context.Context, peerAddr peer.AddrInfo, peerAddrMap, peerAddrErrorMap *sync.Map) {
 	if _, ok := peerAddrMap.Load(peerAddr.ID.String()); ok {
 		return
 	}
