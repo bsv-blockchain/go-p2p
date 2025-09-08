@@ -90,7 +90,7 @@ jobs:
       # ————————————————————————————————————————————————————————————————
       - name: 🏗️ Set up Go
         id: setup-ask-nancy
-        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
           go-version: ${{ inputs.go-primary-version }}
           cache: false # we handle caches ourselves
@@ -169,7 +169,7 @@ jobs:
 
       - name: 🏗️ Set up Go
         id: setup-govulncheck
-        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
           go-version: ${{ inputs.go-primary-version }}
           cache: false # we handle caches ourselves
