@@ -44,6 +44,7 @@ type BlockMessage struct {
 	DataHubURL string // URL where the complete block data can be retrieved
 	PeerID     string // Identifier of the peer announcing the block
 	Header     string // Hexadecimal representation of the block header
+	Coinbase string // Hexadecimal representation of the coinbase transaction
 }
 
 // SubtreeMessage announces the availability of a subtree (transaction batch) to the network.
