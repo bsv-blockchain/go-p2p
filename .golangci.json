@@ -162,7 +162,15 @@
       },
       "misspell": {
         "locale": "US",
-        "ignore-rules": ["bsv", "bitcoin"]
+        "ignore-rules": ["bsv", "bitcoin"],
+        "ignore-words": [
+          "optimise",
+          "optimised",
+          "optimises",
+          "optimising",
+          "optimisation",
+          "optimisations"
+        ]
       },
       "nakedret": {
         "max-func-lines": 30

@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"testing"
@@ -225,6 +226,66 @@ func TestP2PNode_ShouldSkipBasedOnErrors(t *testing.T) {
 			assert.Equal(t, tt.expectedSkip, result)
 		})
 	}
+}
+
+func TestP2PNode_ShouldSkipBasedOnErrors_LegacyAndErrorTypes(t *testing.T) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.ErrorLevel)
+
+	ctx := context.Background()
+	config := Config{
+		ProcessName:     "error-skip-legacy-test",
+		ListenAddresses: []string{"127.0.0.1"},
+		Port:            0,
+		OptimiseRetries: true,
+	}
+
+	node, err := NewNode(ctx, logger, config)
+	require.NoError(t, err)
+	defer func() {
+		if err := node.host.Close(); err != nil {
+			t.Logf("Failed to close host in cleanup: %v", err)
+		}
+	}()
+
+	peerID, _ := peer.Decode("12D3KooWGRYZDHBembyGJQqQ6WgLqJWYNjnECJwGBnCg8vbCeo8F")
+
+	t.Run("legacy bool true skips", func(t *testing.T) {
+		peerAddrErrorMap := &sync.Map{}
+		addr := peer.AddrInfo{ID: peerID, Addrs: []multiaddr.Multiaddr{multiaddr.StringCast("/ip4/1.2.3.4/tcp/4001")}}
+		peerAddrErrorMap.Store(addr.ID.String(), true)
+
+		// Should not panic and should return true
+		result := node.shouldSkipBasedOnErrors(addr, peerAddrErrorMap)
+		assert.True(t, result)
+	})
+
+	t.Run("legacy bool false does not skip", func(t *testing.T) {
+		peerAddrErrorMap := &sync.Map{}
+		addr := peer.AddrInfo{ID: peerID, Addrs: []multiaddr.Multiaddr{multiaddr.StringCast("/ip4/1.2.3.4/tcp/4001")}}
+		peerAddrErrorMap.Store(addr.ID.String(), false)
+
+		result := node.shouldSkipBasedOnErrors(addr, peerAddrErrorMap)
+		assert.False(t, result)
+	})
+
+	t.Run("error type: peer id mismatch", func(t *testing.T) {
+		peerAddrErrorMap := &sync.Map{}
+		addr := peer.AddrInfo{ID: peerID, Addrs: []multiaddr.Multiaddr{multiaddr.StringCast("/ip4/1.2.3.4/tcp/4001")}}
+		peerAddrErrorMap.Store(addr.ID.String(), errors.New("peer id mismatch"))
+
+		result := node.shouldSkipBasedOnErrors(addr, peerAddrErrorMap)
+		assert.True(t, result)
+	})
+
+	t.Run("error type: no good addresses with localhost only", func(t *testing.T) {
+		peerAddrErrorMap := &sync.Map{}
+		addr := peer.AddrInfo{ID: peerID, Addrs: []multiaddr.Multiaddr{multiaddr.StringCast("/ip4/127.0.0.1/tcp/4001")}}
+		peerAddrErrorMap.Store(addr.ID.String(), errors.New("no good addresses"))
+
+		result := node.shouldSkipBasedOnErrors(addr, peerAddrErrorMap)
+		assert.True(t, result)
+	})
 }
 
 func TestP2PNode_ShouldSkipNoGoodAddresses(t *testing.T) {

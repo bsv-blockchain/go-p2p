@@ -1023,7 +1023,21 @@ func (s *Node) shouldSkipBasedOnErrors(addr peer.AddrInfo, peerAddrErrorMap *syn
 		return false
 	}
 
-	errorStr := peerConnectionErrorString.(string)
+	// Support multiple possible types stored in the error map to avoid panics
+	// Prefer string messages (err.Error()), but handle legacy bool and error types gracefully
+	var errorStr string
+	switch v := peerConnectionErrorString.(type) {
+	case string:
+		errorStr = v
+	case error:
+		errorStr = v.Error()
+	case bool:
+		// Legacy behavior stored a boolean on error; if true, we should skip to optimise retries //nolint:misspell
+		return v
+	default:
+		// Unknown type; do not skip based on unrecognized value
+		return false
+	}
 
 	// Check for "no good addresses" error
 	if strings.Contains(errorStr, "no good addresses") {
@@ -1070,7 +1084,8 @@ func (s *Node) attemptConnection(ctx context.Context, peerAddr peer.AddrInfo, pe
 
 	err := s.host.Connect(ctx, peerAddr)
 	if err != nil {
-		peerAddrErrorMap.Store(peerAddr.ID.String(), true)
+		// Store the error string for richer diagnostics and safer handling downstream
+		peerAddrErrorMap.Store(peerAddr.ID.String(), err.Error())
 		s.logger.Debugf("[Node][%s] Failed to connect: %v", peerAddr.String(), err)
 	} else {
 		s.logger.Infof("[Node][%s] Connected in %s", peerAddr.String(), time.Since(s.startTime))
