@@ -1032,7 +1032,7 @@ func (s *Node) shouldSkipBasedOnErrors(addr peer.AddrInfo, peerAddrErrorMap *syn
 	case error:
 		errorStr = v.Error()
 	case bool:
-		// Legacy behavior stored a boolean on error; if true, we should skip to optimise retries //nolint:misspell
+		// Legacy behavior stored a boolean on error; if true, we should skip to optimize retries //nolint:misspell
 		return v
 	default:
 		// Unknown type; do not skip based on unrecognized value
