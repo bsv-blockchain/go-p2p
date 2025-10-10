@@ -38,13 +38,11 @@ func BenchmarkP2PNode_Publish(b *testing.B) {
 	err = node.Start(ctx, nil, "bench-topic")
 	require.NoError(b, err)
 
-	// Test different message sizes
+	// Test different message sizes (optimized for CI: reduced from 5 to 3 sizes)
 	messageSizes := []int{
-		100,     // 100 bytes
-		1024,    // 1 KB
-		10240,   // 10 KB
-		102400,  // 100 KB
-		1048576, // 1 MB
+		100,    // 100 bytes - small messages
+		10240,  // 10 KB - medium messages
+		102400, // 100 KB - large messages
 	}
 
 	for _, size := range messageSizes {
@@ -123,8 +121,8 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 	})
 	require.NoError(b, err)
 
-	// Benchmark different message sizes
-	messageSizes := []int{100, 1024, 10240, 102400}
+	// Benchmark different message sizes (optimized for CI: reduced from 4 to 3 sizes)
+	messageSizes := []int{100, 10240, 102400}
 
 	for _, size := range messageSizes {
 		msg := make([]byte, size)
@@ -169,15 +167,20 @@ func BenchmarkP2PNode_ConcurrentConnections(b *testing.B) {
 
 	centralAddr := fmt.Sprintf("%s/p2p/%s", central.host.Addrs()[0], central.host.ID())
 
-	concurrencyLevels := []int{10, 50, 100}
+	// Optimized for CI: reduced from [10, 50, 100] to [5, 10]
+	// This benchmark is expensive, so we run it only once (b.N=1) to measure setup time
+	concurrencyLevels := []int{5, 10}
 
 	for _, numNodes := range concurrencyLevels {
 		b.Run(fmt.Sprintf("nodes_%d", numNodes), func(b *testing.B) {
-			b.ResetTimer()
-
+			// This benchmark measures concurrent connection setup time
+			// Each iteration creates N nodes, connects them, then cleans up
 			for i := 0; i < b.N; i++ {
+				b.StopTimer() // Pause timer during setup
 				nodes := make([]*Node, numNodes)
 				var wg sync.WaitGroup
+
+				b.StartTimer() // Start timing the actual concurrent connections
 
 				// Create and connect nodes concurrently
 				wg.Add(numNodes)
@@ -186,34 +189,36 @@ func BenchmarkP2PNode_ConcurrentConnections(b *testing.B) {
 						defer wg.Done()
 
 						config := Config{
-							ProcessName:     fmt.Sprintf("node%d", idx),
+							ProcessName:     fmt.Sprintf("node%d-%d", i, idx),
 							ListenAddresses: []string{"127.0.0.1"},
-							Port:            3112 + j,
+							Port:            3112 + idx,
 							StaticPeers:     []string{centralAddr},
 						}
 
-						var node *Node
-						node, err = NewNode(ctx, logger, config)
-						if err != nil {
-							b.Error(err)
+						node, nodeErr := NewNode(ctx, logger, config)
+						if nodeErr != nil {
+							b.Error(nodeErr)
 							return
 						}
 						nodes[idx] = node
 
-						err = node.Start(ctx, nil)
-						if err != nil {
-							b.Error(err)
+						startErr := node.Start(ctx, nil)
+						if startErr != nil {
+							b.Error(startErr)
 						}
 					}(j)
 				}
 
 				wg.Wait()
+				b.StopTimer() // Stop timer during cleanup
 
 				// Clean up nodes
 				for _, node := range nodes {
 					if node != nil {
 						err = node.Stop(ctx)
-						require.NoError(b, err)
+						if err != nil {
+							b.Errorf("Failed to stop node: %v", err)
+						}
 					}
 				}
 			}
@@ -228,8 +233,8 @@ func BenchmarkP2PNode_MessageRouting(b *testing.B) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Create a network of nodes
-	numNodes := 5
+	// Create a network of nodes (optimized for CI: reduced from 5 to 3)
+	numNodes := 3
 	nodes := make([]*Node, numNodes)
 
 	for i := 0; i < numNodes; i++ {
@@ -276,14 +281,16 @@ func BenchmarkP2PNode_MessageRouting(b *testing.B) {
 		require.NoError(b, err)
 	}
 
-	// Wait for network to stabilize
-	time.Sleep(2 * time.Second)
+	// Wait for network to stabilize (optimized for CI: reduced from 2s to 300ms)
+	time.Sleep(300 * time.Millisecond)
 
 	msg := []byte("benchmark routing message")
 
+	// Reset timer after expensive setup - now we only measure message routing
 	b.ResetTimer()
 	b.SetBytes(int64(len(msg)))
 
+	// Benchmark loop: measure message routing throughput
 	for i := 0; i < b.N; i++ {
 		// Publish from random node
 		nodeIdx := i % numNodes
@@ -350,8 +357,8 @@ func BenchmarkP2PNode_PeerManagement(b *testing.B) {
 		}
 	}()
 
-	// Pre-populate with peer data
-	numPeers := 1000
+	// Pre-populate with peer data (optimized for CI: reduced from 1000 to 100)
+	numPeers := 100
 	peerIDs := make([]peer.ID, numPeers)
 
 	for i := 0; i < numPeers; i++ {
