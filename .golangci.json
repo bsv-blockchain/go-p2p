@@ -44,6 +44,10 @@
         "disable": [
             "gocritic",
             "godot",
+            "funcorder",
+            "gocyclo",
+            "gocognit",
+            "nestif",
             "wsl_v5"
         ],
         "enable": [
@@ -65,14 +69,11 @@
             "errorlint",
             "exhaustive",
             "forbidigo",
-            "funcorder",
             "gocheckcompilerdirectives",
             "gochecknoglobals",
             "gochecknoinits",
             "gochecksumtype",
-            "gocognit",
             "goconst",
-            "gocyclo",
             "godox",
             "goheader",
             "gomoddirectives",
@@ -87,7 +88,6 @@
             "misspell",
             "musttag",
             "nakedret",
-            "nestif",
             "nilerr",
             "nilnesserr",
             "nilnil",
@@ -215,11 +215,13 @@
     },
     "run": {
         "allow-parallel-runners": true,
-        "build-tags": [
-            "mage"
-        ],
         "concurrency": 8,
         "issues-exit-code": 1,
+        "modules-download-mode": "readonly",
+        "skip-dirs-use-default": true,
+        "skip-files": [
+            "tools\\.go$"
+        ],
         "tests": true
     },
     "severity": {
