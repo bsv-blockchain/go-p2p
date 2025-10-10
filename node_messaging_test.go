@@ -238,8 +238,8 @@ func TestP2PNode_InitGossipSub(t *testing.T) {
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer func() {
-		if err := node.host.Close(); err != nil { //nolint:govet // Intentional shadowing in defer
-			t.Logf("Failed to close host in cleanup: %v", err)
+		if funcErr := node.host.Close(); funcErr != nil {
+			t.Logf("Failed to close host in cleanup: %v", funcErr)
 		}
 	}()
 
@@ -263,8 +263,8 @@ func TestP2PNode_InitGossipSub(t *testing.T) {
 		node2, err = NewNode(ctx, logger, config)
 		require.NoError(t, err)
 		defer func() {
-			if err := node2.host.Close(); err != nil { //nolint:govet // Intentional shadowing in defer
-				t.Logf("Failed to close node2 host in cleanup: %v", err)
+			if funcErr := node2.host.Close(); funcErr != nil {
+				t.Logf("Failed to close node2 host in cleanup: %v", funcErr)
 			}
 		}()
 
@@ -289,8 +289,8 @@ func TestSubscribeToTopics(t *testing.T) {
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer func() {
-		if err := node.host.Close(); err != nil { //nolint:govet // Intentional shadowing in defer
-			t.Logf("Failed to close host in cleanup: %v", err)
+		if funcErr := node.host.Close(); funcErr != nil {
+			t.Logf("Failed to close host in cleanup: %v", funcErr)
 		}
 	}()
 
@@ -330,8 +330,8 @@ func TestP2PNode_ConcurrentPublishing(t *testing.T) {
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
 	defer func() {
-		if err := node.Stop(ctx); err != nil { //nolint:govet // Intentional shadowing in defer
-			t.Logf("Failed to stop node in cleanup: %v", err)
+		if funcErr := node.Stop(ctx); funcErr != nil {
+			t.Logf("Failed to stop node in cleanup: %v", funcErr)
 		}
 	}()
 
@@ -389,8 +389,8 @@ func TestP2PNode_HandlerContextCancellation(t *testing.T) {
 	node, err := NewNode(context.Background(), logger, config)
 	require.NoError(t, err)
 	defer func() {
-		if err := node.host.Close(); err != nil { //nolint:govet // Intentional shadowing in defer
-			t.Logf("Failed to close host in cleanup: %v", err)
+		if funcErr := node.host.Close(); funcErr != nil {
+			t.Logf("Failed to close host in cleanup: %v", funcErr)
 		}
 	}()
 
