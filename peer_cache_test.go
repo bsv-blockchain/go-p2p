@@ -15,7 +15,7 @@ func TestPeerCacheSaveAndLoad(t *testing.T) {
 	// Create temp file for cache
 	tmpDir, err := os.MkdirTemp("", "peercache-test")
 	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	cacheFile := filepath.Join(tmpDir, "peers.json")
 

@@ -3,6 +3,7 @@ package p2p
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -13,6 +14,14 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+// Fuzz test sentinel errors
+var (
+	errFuzzInvalidHexLength = errors.New("invalid hex string length")
+	errFuzzInvalidHexChar   = errors.New("invalid hex character")
+	errFuzzKeyTooShort      = errors.New("key too short")
+	errFuzzKeyTooLong       = errors.New("key too long")
 )
 
 // mockLogger implements Logger interface for fuzzing tests
@@ -343,25 +352,25 @@ func parsePrivateKeyFromHex(hexStr string) ([]byte, error) {
 
 	// Validate hex string length
 	if len(hexStr)%2 != 0 {
-		return nil, fmt.Errorf("invalid hex string length: %d", len(hexStr))
+		return nil, fmt.Errorf("%w: %d", errFuzzInvalidHexLength, len(hexStr))
 	}
 
 	// Check for valid hex characters
 	for _, char := range hexStr {
-		if !((char >= '0' && char <= '9') ||
-			(char >= 'a' && char <= 'f') ||
-			(char >= 'A' && char <= 'F')) {
-			return nil, fmt.Errorf("invalid hex character: %c", char)
+		if (char < '0' || char > '9') &&
+			(char < 'a' || char > 'f') &&
+			(char < 'A' || char > 'F') {
+			return nil, fmt.Errorf("%w: %c", errFuzzInvalidHexChar, char)
 		}
 	}
 
 	// Simulate key length validation
 	if len(hexStr) < 32 { // Minimum reasonable key length
-		return nil, fmt.Errorf("key too short: %d", len(hexStr))
+		return nil, fmt.Errorf("%w: %d", errFuzzKeyTooShort, len(hexStr))
 	}
 
 	if len(hexStr) > 2048 { // Maximum reasonable key length
-		return nil, fmt.Errorf("key too long: %d", len(hexStr))
+		return nil, fmt.Errorf("%w: %d", errFuzzKeyTooLong, len(hexStr))
 	}
 
 	// Return dummy bytes (in real implementation, this would decode hex)

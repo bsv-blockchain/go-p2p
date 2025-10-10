@@ -266,11 +266,11 @@ func TestAutoNATv2Integration(t *testing.T) {
 
 	node1, err := NewNode(ctx, logger, config1)
 	require.NoError(t, err)
-	defer node1.Stop(ctx)
+	defer func() { _ = node1.Stop(ctx) }()
 
 	node2, err := NewNode(ctx, logger, config2)
 	require.NoError(t, err)
-	defer node2.Stop(ctx)
+	defer func() { _ = node2.Stop(ctx) }()
 
 	// Start both nodes
 	err = node1.Start(ctx, nil)

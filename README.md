@@ -94,7 +94,7 @@
 ### Core Components
 
 - **P2PNode** - The main networking node implementation that manages peer connections, message routing, and network discovery
-- **P2PNodeI** - Interface defining the complete P2P networking API for testability and modularity  
+- **P2PNodeI** - Interface defining the complete P2P networking API for testability and modularity
 - **P2PConfig** - Configuration structure for network parameters, bootstrap peers, and security settings
 - **Handler** - Function type for processing incoming topic messages in pub/sub communications
 
@@ -130,7 +130,7 @@ go get -u github.com/bsv-blockchain/go-p2p
 - **Interface Documentation** – Review the [P2PNodeI interface](interface.go) for the complete API specification
 - **Core Implementation** – Examine the main [P2P node implementation](node.go) and [configuration types](types.go)
 
-> **Good to know:** `go-p2p` ships with *zero* runtime dependencies.  
+> **Good to know:** `go-p2p` ships with *zero* runtime dependencies.
 > The only external package we use is `testify`—and that's strictly for tests.
 
 <br/>

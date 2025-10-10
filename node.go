@@ -201,7 +201,7 @@ func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 				// If no public addresses are set, let's attempt to grab it publicly
 				// Ignore errors because we don't care if we can't find it
 				var ifconfig string
-				ifconfig, localErr := GetPublicIP(context.Background())
+				ifconfig, localErr := GetPublicIP(ctx)
 				if localErr != nil {
 					logger.Debugf("[Node] error getting public IP: %v", localErr)
 				}
@@ -293,7 +293,7 @@ func NewNode(ctx context.Context, logger Logger, config Config) (*Node, error) {
 			}
 
 			// Notify any connection handlers about the new peer
-			node.callPeerConnected(context.Background(), peerID)
+			node.callPeerConnected(ctx, peerID)
 		},
 		DisconnectedF: func(_ network.Network, conn network.Conn) {
 			peerID := conn.RemotePeer()
@@ -640,13 +640,13 @@ func (s *Node) Stop(_ context.Context) error {
 func (s *Node) SetTopicHandler(ctx context.Context, topicName string, handler Handler) error {
 	_, ok := s.handlerByTopic[topicName]
 	if ok {
-		return fmt.Errorf("[Node][SetTopicHandler] handler already exists for topic: %s", topicName)
+		return fmt.Errorf("[Node][SetTopicHandler] %w: %s", ErrHandlerAlreadyExists, topicName)
 	}
 
 	topic := s.topics[topicName]
 
 	if topic == nil {
-		return fmt.Errorf("[Node][SetTopicHandler] topic not found: %s", topicName)
+		return fmt.Errorf("[Node][SetTopicHandler] %w: %s", ErrTopicNotFound, topicName)
 	}
 	sub, err := topic.Subscribe()
 	if err != nil {
@@ -675,10 +675,10 @@ func (s *Node) SetTopicHandler(ctx context.Context, topicName string, handler Ha
 				}
 
 				// Set logger to info for handshake messages, debug for others
-				if strings.Contains(*m.Message.Topic, "handshake") {
-					s.logger.Infof("[Node][SetTopicHandler]: topic: %s - from: %s - message: %s\n", *m.Message.Topic, m.ReceivedFrom.ShortString(), strings.TrimSpace(string(m.Message.Data)))
+				if strings.Contains(*m.Topic, "handshake") {
+					s.logger.Infof("[Node][SetTopicHandler]: topic: %s - from: %s - message: %s\n", *m.Topic, m.ReceivedFrom.ShortString(), strings.TrimSpace(string(m.Data)))
 				} else {
-					s.logger.Debugf("[Node][SetTopicHandler]: topic: %s - from: %s - message: %s\n", *m.Message.Topic, m.ReceivedFrom.ShortString(), strings.TrimSpace(string(m.Message.Data)))
+					s.logger.Debugf("[Node][SetTopicHandler]: topic: %s - from: %s - message: %s\n", *m.Topic, m.ReceivedFrom.ShortString(), strings.TrimSpace(string(m.Data)))
 				}
 				handler(ctx, m.Data, m.ReceivedFrom.String())
 			}
@@ -710,11 +710,11 @@ func (s *Node) Publish(ctx context.Context, topicName string, msgBytes []byte) e
 		s.logger.Debugf("[Node][Publish] allowing handshake mesages in listen_only mode for topic: %s", topicName)
 	}
 	if len(s.topics) == 0 {
-		return fmt.Errorf("[Node][Publish] topics not initialized")
+		return fmt.Errorf("[Node][Publish] %w", ErrTopicsNotInitialized)
 	}
 
 	if _, ok := s.topics[topicName]; !ok {
-		return fmt.Errorf("[Node][Publish] topic not found: %s", topicName)
+		return fmt.Errorf("[Node][Publish] %w: %s", ErrTopicNotFound, topicName)
 	}
 
 	if err := s.topics[topicName].Publish(ctx, msgBytes); err != nil {
@@ -1185,13 +1185,13 @@ func (s *Node) initPrivateDHT(ctx context.Context, host host.Host) (*dht.IpfsDHT
 	s.logger.Infof("[Node] bootstrapAddresses: %v", bootstrapAddresses)
 
 	if len(bootstrapAddresses) == 0 {
-		return nil, fmt.Errorf("[Node] bootstrapAddresses not set in config")
+		return nil, fmt.Errorf("[Node] %w", ErrBootstrapAddressesNotSet)
 	}
 
 	// Ensure the DHT protocol ID is set in the config
 	dhtProtocolIDStr := s.config.DHTProtocolID
 	if dhtProtocolIDStr == "" {
-		return nil, errors.New("[Node] error getting p2p_dht_protocol_id")
+		return nil, fmt.Errorf("[Node] %w", ErrDHTProtocolIDNotSet)
 	}
 
 	dhtProtocolID := protocol.ID(dhtProtocolIDStr)
@@ -1238,7 +1238,7 @@ func (s *Node) initPrivateDHT(ctx context.Context, host host.Host) (*dht.IpfsDHT
 
 	// Only return an error if we couldn't connect to any bootstrap addresses
 	if !connectedToBootstrap {
-		return nil, fmt.Errorf("[Node] failed to connect to any bootstrap addresses")
+		return nil, fmt.Errorf("[Node] %w", ErrFailedToConnectToBootstrap)
 	}
 
 	var options []dht.Option
@@ -1431,7 +1431,7 @@ func GetIPFromMultiaddr(addr multiaddr.Multiaddr) (string, error) {
 		return value, nil
 	}
 
-	return "", fmt.Errorf("no IP or DNS component found in multiaddr")
+	return "", ErrNoIPOrDNSInMultiaddr
 }
 
 // getIPFromMultiaddr is deprecated, use GetIPFromMultiaddr instead

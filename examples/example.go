@@ -37,12 +37,12 @@ func main() {
 
 	// Start the node with the example topic
 	topicName := "example-topic"
-	if err := node.Start(ctx, nil, topicName); err != nil {
+	if err = node.Start(ctx, nil, topicName); err != nil {
 		log.Fatalf("Failed to start P2P node: %v", err)
 	}
 
 	// Set the message handler for our topic
-	if err := node.SetTopicHandler(ctx, topicName, messageHandler); err != nil {
+	if err = node.SetTopicHandler(ctx, topicName, messageHandler); err != nil {
 		log.Fatalf("Failed to set topic handler: %v", err)
 	}
 
@@ -53,7 +53,7 @@ func main() {
 	go func() {
 		time.Sleep(5 * time.Second)
 		testMessage := []byte("Hello from go-p2p example!")
-		if err := node.Publish(ctx, topicName, testMessage); err != nil {
+		if err = node.Publish(ctx, topicName, testMessage); err != nil {
 			logger.Errorf("Failed to publish message: %v", err)
 		} else {
 			logger.Infof("Published test message: %s", testMessage)
@@ -64,19 +64,16 @@ func main() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			peers := node.CurrentlyConnectedPeers()
-			logger.Infof("Currently connected to %d peers", len(peers))
+	for range ticker.C {
+		peers := node.CurrentlyConnectedPeers()
+		logger.Infof("Currently connected to %d peers", len(peers))
 
-			stats := map[string]interface{}{
-				"bytes_sent":     node.BytesSent(),
-				"bytes_received": node.BytesReceived(),
-				"last_send":      node.LastSend(),
-				"last_recv":      node.LastRecv(),
-			}
-			logger.Infof("Node statistics: %+v", stats)
+		stats := map[string]interface{}{
+			"bytes_sent":     node.BytesSent(),
+			"bytes_received": node.BytesReceived(),
+			"last_send":      node.LastSend(),
+			"last_recv":      node.LastRecv(),
 		}
+		logger.Infof("Node statistics: %+v", stats)
 	}
 }

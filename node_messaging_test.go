@@ -427,20 +427,6 @@ func TestP2PNode_HandlerContextCancellation(t *testing.T) {
 	}
 }
 
-// MockPubSub for testing edge cases
-type mockPubSub struct {
-	*pubsub.PubSub
-
-	joinError error
-}
-
-func (m *mockPubSub) Join(_ string, _ ...pubsub.TopicOpt) (*pubsub.Topic, error) {
-	if m.joinError != nil {
-		return nil, m.joinError
-	}
-	return &pubsub.Topic{}, nil
-}
-
 func TestSubscribeToTopics_Error(t *testing.T) {
 	logger := logrus.New()
 
@@ -453,7 +439,7 @@ func TestSubscribeToTopics_Error(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.host.Close()
+	defer func() { _ = node.host.Close() }()
 
 	// Create a mock pubsub that returns error
 	/*mockPS := &mockPubSub{

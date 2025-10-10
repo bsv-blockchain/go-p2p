@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -19,6 +20,17 @@ const (
 	ListenModeFull = "full"
 	// ListenModeListenOnly defines the node should operate in listen-only mode
 	ListenModeListenOnly = "listen_only"
+)
+
+// Sentinel errors for static error handling
+var (
+	ErrHandlerAlreadyExists       = errors.New("handler already exists for topic")
+	ErrTopicNotFound              = errors.New("topic not found")
+	ErrTopicsNotInitialized       = errors.New("topics not initialized")
+	ErrBootstrapAddressesNotSet   = errors.New("bootstrapAddresses not set in config")
+	ErrDHTProtocolIDNotSet        = errors.New("error getting p2p_dht_protocol_id")
+	ErrFailedToConnectToBootstrap = errors.New("failed to connect to any bootstrap addresses")
+	ErrNoIPOrDNSInMultiaddr       = errors.New("no IP or DNS component found in multiaddr")
 )
 
 // Node implements the NodeI interface and provides the core functionality

@@ -16,6 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Sink variables to prevent compiler optimizations in benchmarks
+var benchmarkSink any //nolint:gochecknoglobals // required for benchmarking
+
 func BenchmarkP2PNode_Publish(b *testing.B) {
 	logger := logrus.New()
 	logger.SetLevel(logrus.ErrorLevel)
@@ -473,6 +476,7 @@ func BenchmarkP2PNode_MemoryAllocation(b *testing.B) {
 					ConnTime:      &now,
 				})
 			}
+			benchmarkSink = peers
 		}
 	})
 }

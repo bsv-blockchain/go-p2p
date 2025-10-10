@@ -8,13 +8,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+// Test-specific sentinel errors
+var (
+	errTestPeerIDMismatch  = errors.New("peer id mismatch")
+	errTestNoGoodAddresses = errors.New("no good addresses")
 )
 
 func TestP2PNode_StaticPeerConnection(t *testing.T) {
@@ -272,7 +277,7 @@ func TestP2PNode_ShouldSkipBasedOnErrors_LegacyAndErrorTypes(t *testing.T) {
 	t.Run("error type: peer id mismatch", func(t *testing.T) {
 		peerAddrErrorMap := &sync.Map{}
 		addr := peer.AddrInfo{ID: peerID, Addrs: []multiaddr.Multiaddr{multiaddr.StringCast("/ip4/1.2.3.4/tcp/4001")}}
-		peerAddrErrorMap.Store(addr.ID.String(), errors.New("peer id mismatch"))
+		peerAddrErrorMap.Store(addr.ID.String(), errTestPeerIDMismatch)
 
 		result := node.shouldSkipBasedOnErrors(addr, peerAddrErrorMap)
 		assert.True(t, result)
@@ -281,7 +286,7 @@ func TestP2PNode_ShouldSkipBasedOnErrors_LegacyAndErrorTypes(t *testing.T) {
 	t.Run("error type: no good addresses with localhost only", func(t *testing.T) {
 		peerAddrErrorMap := &sync.Map{}
 		addr := peer.AddrInfo{ID: peerID, Addrs: []multiaddr.Multiaddr{multiaddr.StringCast("/ip4/127.0.0.1/tcp/4001")}}
-		peerAddrErrorMap.Store(addr.ID.String(), errors.New("no good addresses"))
+		peerAddrErrorMap.Store(addr.ID.String(), errTestNoGoodAddresses)
 
 		result := node.shouldSkipBasedOnErrors(addr, peerAddrErrorMap)
 		assert.True(t, result)
@@ -375,7 +380,7 @@ func TestP2PNode_AttemptConnection(t *testing.T) {
 
 	node1, err := NewNode(ctx, logger, config1)
 	require.NoError(t, err)
-	defer node1.host.Close()
+	defer func() { _ = node1.host.Close() }()
 
 	config2 := Config{
 		ProcessName:        "node2",
@@ -386,7 +391,7 @@ func TestP2PNode_AttemptConnection(t *testing.T) {
 
 	node2, err := NewNode(ctx, logger, config2)
 	require.NoError(t, err)
-	defer node2.host.Close()
+	defer func() { _ = node2.host.Close() }()
 
 	t.Run("successful connection", func(t *testing.T) {
 		peerAddrMap := &sync.Map{}
@@ -628,41 +633,4 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 		assert.Contains(t, err.Error(), "error getting p2p_dht_protocol_id")
 		assert.Nil(t, dht)
 	})
-}
-
-// MockHost for testing - implements minimal host.Host interface
-type mockHost struct {
-	host.Host
-
-	id       peer.ID
-	network  network.Network
-	conns    map[peer.ID]network.Connectedness
-	connLock sync.RWMutex
-}
-
-func newMockHost(id peer.ID) *mockHost {
-	return &mockHost{
-		id:    id,
-		conns: make(map[peer.ID]network.Connectedness),
-	}
-}
-
-func (m *mockHost) ID() peer.ID {
-	return m.id
-}
-
-func (m *mockHost) Network() network.Network {
-	return m.network
-}
-
-func (m *mockHost) Connect(_ context.Context, pi peer.AddrInfo) error {
-	m.connLock.Lock()
-	defer m.connLock.Unlock()
-
-	m.conns[pi.ID] = network.Connected
-	return nil
-}
-
-func (m *mockHost) Addrs() []multiaddr.Multiaddr {
-	return []multiaddr.Multiaddr{multiaddr.StringCast("/ip4/127.0.0.1/tcp/4001")}
 }

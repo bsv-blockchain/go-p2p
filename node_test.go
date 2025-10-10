@@ -346,7 +346,7 @@ func TestP2PNode_BasicGetters(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.host.Close()
+	defer func() { _ = node.host.Close() }()
 
 	t.Run("HostID", func(t *testing.T) {
 		hostID := node.HostID()
@@ -390,7 +390,7 @@ func TestP2PNode_Metrics(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.host.Close()
+	defer func() { _ = node.host.Close() }()
 
 	t.Run("initial metrics", func(t *testing.T) {
 		assert.Equal(t, uint64(0), node.BytesSent())
@@ -413,7 +413,7 @@ func TestP2PNode_PeerManagement(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.host.Close()
+	defer func() { _ = node.host.Close() }()
 
 	// Test peer ID parsing
 	peerIDStr := "12D3KooWGRYZDHBembyGJQqQ6WgLqJWYNjnECJwGBnCg8vbCeo8F"
@@ -476,7 +476,7 @@ func TestP2PNode_Callbacks(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.host.Close()
+	defer func() { _ = node.host.Close() }()
 
 	t.Run("SetPeerConnectedCallback", func(t *testing.T) {
 		callbackCalled := false
@@ -504,7 +504,7 @@ func TestP2PNode_Callbacks(t *testing.T) {
 		// Create new node without callback
 		node2, err := NewNode(ctx, logger, config)
 		require.NoError(t, err)
-		defer node2.host.Close()
+		defer func() { _ = node2.host.Close() }()
 
 		// Should not panic when calling without callback
 		testPeerID, _ := peer.Decode("12D3KooWGRYZDHBembyGJQqQ6WgLqJWYNjnECJwGBnCg8vbCeo8F")
@@ -527,7 +527,7 @@ func TestP2PNode_ThreadSafety(t *testing.T) {
 
 	node, err := NewNode(ctx, logger, config)
 	require.NoError(t, err)
-	defer node.host.Close()
+	defer func() { _ = node.host.Close() }()
 
 	// Test concurrent access to callbacks
 	t.Run("concurrent callback operations", func(_ *testing.T) {
@@ -579,11 +579,11 @@ func TestP2PNode_ConnectToPeer(t *testing.T) {
 
 	node1, err := NewNode(ctx, logger, config1)
 	require.NoError(t, err)
-	defer node1.host.Close()
+	defer func() { _ = node1.host.Close() }()
 
 	node2, err := NewNode(ctx, logger, config2)
 	require.NoError(t, err)
-	defer node2.host.Close()
+	defer func() { _ = node2.host.Close() }()
 
 	// Get node2's address
 	node2Addrs := node2.host.Addrs()
@@ -659,7 +659,7 @@ func TestP2PNode_ConnectToPeer(t *testing.T) {
 		}
 		node3, err := NewNode(ctx, logger, config3)
 		require.NoError(t, err)
-		defer node3.host.Close()
+		defer func() { _ = node3.host.Close() }()
 
 		// Create a context that we'll cancel
 		connectCtx, cancel := context.WithCancel(ctx)
