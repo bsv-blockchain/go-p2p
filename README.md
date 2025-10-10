@@ -1,5 +1,5 @@
 # 🛰 go-p2p
-> Enterprise-ready P2P networking for BSV blockchain—built on libp2p with DHT, GossipSub, and private networks.
+> Enterprise-ready P2P networking for BSV blockchain—built on libp2p with DHT.
 
 <table>
   <thead>
