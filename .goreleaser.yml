@@ -6,12 +6,11 @@ version: 2
 
 before:
   hooks:
-    - make test
+    - sh -c 'if [ "$SKIP_GORELEASER_TESTS" = "true" ]; then echo "Skipping tests (SKIP_GORELEASER_TESTS=true)"; else magex test; fi'
 changelog:
   sort: asc
   filters:
     exclude:
-      - "^.github:"
       - "^.vscode:"
       - "^test:"
 
@@ -28,6 +27,24 @@ builds:
     skip: true
 
 # ---------------------------
+# Archives
+# ---------------------------
+archives:
+  - id: go-p2p
+    name_template: >-
+      {{- .ProjectName }}_{{- .Version }}_{{- .Os }}_{{- .Arch }}
+    files:
+      - LICENSE
+      - README.md
+
+# ---------------------------
+# Checksum
+# ---------------------------
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  algorithm: sha256
+
+# ---------------------------
 # Github Release
 # ---------------------------
 release:
@@ -41,7 +58,7 @@ announce:
   # See more at: https://goreleaser.com/customization/announce/#slack
   slack:
     enabled: false
-    message_template: "{{ .ProjectName }} {{ .Tag }} is out! Changelog: https://github.com/bsv-blockchain/{{ .ProjectName }}/releases/tag/{{ .Tag }}"
+    message_template: "{{ .ProjectName }} {{ .Tag }} is out! Changelog: https://github.com/{{ .GitOwner }}/{{ .ProjectName }}/releases/tag/{{ .Tag }}"
     channel: "#test_slack"
     # username: ''
     # icon_emoji: ''
@@ -71,6 +88,6 @@ announce:
     # Username for your Reddit account
     username: ""
     # Defaults to `{{ .GitURL }}/releases/tag/{{ .Tag }}`
-    # url_template: 'https://github.com/bsv-blockchain/{{ .ProjectName }}/releases/tag/{{ .Tag }}'
+    # url_template: 'https://github.com/{{ .GitOwner }}/{{ .ProjectName }}/releases/tag/{{ .Tag }}'
     # Defaults to `{{ .ProjectName }} {{ .Tag }} is out!`
     title_template: "{{ .ProjectName }} {{ .Tag }} is out!"
