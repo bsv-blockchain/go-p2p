@@ -8,7 +8,7 @@
             ],
             "settings": {
                 "editor.codeActionsOnSave": {
-                    "source.organizeImports": true
+                    "source.organizeImports": "explicit"
                 },
                 "editor.formatOnSave": true,
                 "go.lintTool": "golangci-lint",
@@ -29,7 +29,7 @@
         "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
     ],
     "name": "go-p2p dev container",
-    "postCreateCommand": "make lint && go vet ./... && go test ./...",
+    "postCreateCommand": "magex lint && magex vet && magex test",
     "remoteUser": "vscode",
     "runArgs": [
         "--cap-drop=ALL",
