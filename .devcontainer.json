@@ -1,35 +1,39 @@
 {
-  "name": "go-p2p dev container",
-  "image": "mcr.microsoft.com/devcontainers/go:0-1.24-bullseye",
-  "features": {
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
-  },
-  "mounts": [
-    "type=cache,target=/home/vscode/.cache/go-build",
-    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
-  ],
-  "runArgs": ["--cap-drop=ALL", "--security-opt", "no-new-privileges:true"],
-  "postCreateCommand": "make lint && go vet ./... && go test ./...",
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "go.useLanguageServer": true,
-        "go.lintTool": "golangci-lint",
-        "go.toolsEnvVars": {
-          "GOFLAGS": "-buildvcs=false"
-        },
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-          "source.organizeImports": true
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.Go",
+                "github.vscode-github-actions",
+                "eamodio.gitlens"
+            ],
+            "settings": {
+                "editor.codeActionsOnSave": {
+                    "source.organizeImports": true
+                },
+                "editor.formatOnSave": true,
+                "go.lintTool": "golangci-lint",
+                "go.toolsEnvVars": {
+                    "GOFLAGS": "-buildvcs=false"
+                },
+                "go.useLanguageServer": true
+            }
         }
-      },
-      "extensions": [
-        "golang.Go",
-        "github.vscode-github-actions",
-        "eamodio.gitlens"
-      ]
-    }
-  },
-  "remoteUser": "vscode"
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    "image": "mcr.microsoft.com/devcontainers/go:0-1.24-bullseye",
+    "mounts": [
+        "type=cache,target=/home/vscode/.cache/go-build",
+        "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
+    ],
+    "name": "go-p2p dev container",
+    "postCreateCommand": "make lint && go vet ./... && go test ./...",
+    "remoteUser": "vscode",
+    "runArgs": [
+        "--cap-drop=ALL",
+        "--security-opt",
+        "no-new-privileges:true"
+    ]
 }
