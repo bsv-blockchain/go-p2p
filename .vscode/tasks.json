@@ -526,7 +526,7 @@
             "command": "go-pre-commit install",
             "detail": "Install go-pre-commit hooks",
             "group": "none",
-            "label": "pre-commit: install",
+            "label": "go-pre-commit: install",
             "presentation": {
                 "clear": true,
                 "focus": false,
@@ -540,7 +540,7 @@
             "command": "go-pre-commit run --all-files",
             "detail": "Run pre-commit hooks on all files",
             "group": "none",
-            "label": "pre-commit: run",
+            "label": "go-pre-commit: run",
             "presentation": {
                 "clear": true,
                 "focus": false,
