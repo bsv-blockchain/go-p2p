@@ -30,6 +30,7 @@
     ],
     "name": "go-p2p dev container",
     "postCreateCommand": "magex lint && magex vet && magex test",
+    "postStartCommand": "go install github.com/magefile/mage/cmd/magex@latest",
     "remoteUser": "vscode",
     "runArgs": [
         "--cap-drop=ALL",

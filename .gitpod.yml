@@ -28,7 +28,7 @@ tasks:
       echo "🛠️  Available magex commands:"
       echo "  magex test       - Run all tests"
       echo "  magex lint       - Run linters"
-      echo "  magex format:fix - Format code"
+      echo "  magex format:fix - Format the code"
       echo "  magex build      - Build the project"
       echo "  magex help       - List all available commands"
       echo ""
