@@ -20,7 +20,7 @@ name: Sync Labels
 # --------------------------------------------------------------------
 on:
   push:
-    branches: [master]
+    branches: [master, main] # Trigger on pushes to both master and main branches
     paths:
       - .github/labels.yml # Runs *only* when this file changes
   workflow_dispatch: # Allow manual triggering
