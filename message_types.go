@@ -45,6 +45,7 @@ type BlockMessage struct {
 	PeerID     string // Identifier of the peer announcing the block
 	Header     string // Hexadecimal representation of the block header
 	Coinbase   string // Hexadecimal representation of the coinbase transaction
+	ClientName string // Name of the client software announcing the block
 }
 
 // SubtreeMessage announces the availability of a subtree (transaction batch) to the network.
@@ -61,6 +62,7 @@ type SubtreeMessage struct {
 	Hash       string // Unique hash identifier of the subtree
 	DataHubURL string // URL where the subtree data can be retrieved
 	PeerID     string // Identifier of the peer announcing the subtree
+	ClientName string // Name of the client software announcing the subtree
 }
 
 // RejectedTxMessage notifies peers about a rejected transaction.
