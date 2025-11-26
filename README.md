@@ -8,7 +8,7 @@
 
 <a href="https://github.com/bsv-blockchain/go-p2p/releases"><img src="https://img.shields.io/github/release-pre/bsv-blockchain/go-p2p?include_prereleases&style=flat-square&logo=github&color=black" alt="Release"></a>
 <a href="https://golang.org/"><img src="https://img.shields.io/github/go-mod/go-version/bsv-blockchain/go-p2p?style=flat-square&logo=go&color=00ADD8" alt="Go Version"></a>
-<a href="https://github.com/bsv-blockchain/go-p2p/blob/master/LICENSE"><img src="https://img.shields.io/github/license/bsv-blockchain/go-p2p?style=flat-square&color=blue" alt="License"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-OpenBSV-blue?style=flat-square&logo=springsecurity&logoColor=white" alt="License"></a>
 
 <br/>
 
