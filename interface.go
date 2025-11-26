@@ -4,9 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/network"
-
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 

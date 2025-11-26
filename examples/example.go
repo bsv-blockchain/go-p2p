@@ -6,8 +6,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/bsv-blockchain/go-p2p"
 	"github.com/sirupsen/logrus"
+
+	"github.com/bsv-blockchain/go-p2p"
 )
 
 func main() {
