@@ -39,6 +39,13 @@ updates:
       timezone: "America/New_York"
     allow:
       - dependency-type: "direct"
+    ignore:
+      - dependency-name: "github.com/libp2p/go-libp2p"
+        versions: ["v6.0.23+incompatible"]
+      # quic-go updates blocked until libp2p supports newer versions
+      # libp2p v0.45.0 requires quic-go v0.56.0; v0.57.0 is incompatible
+      - dependency-name: "github.com/quic-go/quic-go"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
     groups:
       security-deps:
         patterns:
