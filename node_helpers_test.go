@@ -419,11 +419,11 @@ func BenchmarkGeneratePrivateKey(b *testing.B) {
 }
 
 func BenchmarkIsPrivateIP(b *testing.B) {
-	addrs := []multiaddr.Multiaddr{}
 	testIPs := []string{
 		"10.0.0.1", "192.168.1.1", "8.8.8.8", "172.16.0.1",
 		"1.1.1.1", "127.0.0.1", "172.32.0.1", "192.169.0.1",
 	}
+	addrs := make([]multiaddr.Multiaddr, 0, len(testIPs))
 
 	for _, ip := range testIPs {
 		addr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/4001", ip))
