@@ -1097,7 +1097,7 @@ func (s *Node) initDHT(ctx context.Context, h host.Host) (*dht.IpfsDHT, error) {
 	// client because we want each peer to maintain its own local copy of the
 	// DHT, so that the bootstrapping node of the DHT can go down without
 	// inhibiting future peer discovery.
-	var options []dht.Option
+	options := make([]dht.Option, 0, 1)
 
 	options = append(options, dht.Mode(dht.ModeAutoServer))
 
@@ -1241,7 +1241,7 @@ func (s *Node) initPrivateDHT(ctx context.Context, host host.Host) (*dht.IpfsDHT
 		return nil, fmt.Errorf("[Node] %w", ErrFailedToConnectToBootstrap)
 	}
 
-	var options []dht.Option
+	options := make([]dht.Option, 0, 2)
 	options = append(options, dht.ProtocolPrefix(dhtProtocolID))
 	options = append(options, dht.Mode(dht.ModeAuto))
 
