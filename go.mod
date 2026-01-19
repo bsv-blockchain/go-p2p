@@ -4,7 +4,7 @@ go 1.24.6
 
 require (
 	github.com/libp2p/go-libp2p v0.46.0
-	github.com/libp2p/go-libp2p-kad-dht v0.36.0
+	github.com/libp2p/go-libp2p-kad-dht v0.37.0
 	github.com/libp2p/go-libp2p-pubsub v0.15.0
 	github.com/multiformats/go-multiaddr v0.16.1
 	github.com/sirupsen/logrus v1.9.3
