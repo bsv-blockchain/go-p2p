@@ -54,6 +54,7 @@ jobs:
     runs-on: ${{ inputs.primary-runner }}
     permissions:
       contents: read
+      actions: write # Required for workflow cancellation on failure
     outputs:
       pre-commit-version: ${{ steps.pre-commit-version.outputs.version }}
       checks-executed: ${{ steps.run-checks.outputs.executed }}
@@ -62,7 +63,7 @@ jobs:
       # Checkout code (full checkout to ensure local actions are available)
       # --------------------------------------------------------------------
       - name: 📥 Checkout code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0 # Fetch full history to enable file change detection for all commit ranges
 
@@ -884,3 +885,12 @@ jobs:
           artifact-name: cache-stats-pre-commit
           artifact-path: cache-stats-pre-commit.json
           retention-days: 1
+
+      # --------------------------------------------------------------------
+      # Cancel workflow on failure (save CI resources)
+      # --------------------------------------------------------------------
+      - name: 🚨 Cancel workflow on failure
+        if: failure()
+        uses: ./.github/actions/cancel-workflow-on-failure
+        with:
+          reason: "Pre-commit checks failed"
