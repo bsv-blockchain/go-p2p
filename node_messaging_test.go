@@ -351,7 +351,7 @@ func TestP2PNode_ConcurrentPublishing(t *testing.T) {
 			defer wg.Done()
 
 			for j := 0; j < numMessages; j++ {
-				msg := []byte(string(rune(routineID)) + string(rune(j)))
+				msg := []byte(string(rune(routineID)) + string(rune(j))) //nolint:gosec // G115: intentional int->rune in tests
 				if err := node.Publish(ctx, "test-topic", msg); err != nil {
 					errors <- err
 				}
@@ -372,7 +372,7 @@ func TestP2PNode_ConcurrentPublishing(t *testing.T) {
 	assert.Equal(t, 0, errorCount, "Should have no publishing errors")
 
 	// Verify metrics
-	expectedBytes := uint64(numGoroutines * numMessages * 2) //nolint:gosec // Each message is 2 bytes
+	expectedBytes := uint64(numGoroutines * numMessages * 2)
 	assert.Equal(t, expectedBytes, node.BytesSent())
 }
 

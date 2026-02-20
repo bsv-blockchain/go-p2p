@@ -25,7 +25,7 @@ func GetPublicIP(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	resp, err := client.Do(req)
+	resp, err := client.Do(req) //nolint:gosec // G704: URL is hardcoded, not user-supplied
 	if err != nil {
 		return "", err
 	}

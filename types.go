@@ -92,7 +92,7 @@ type Config struct {
 	AdvertiseAddresses []string // Addresses to advertise to other peers (may differ from listen addresses)
 	Port               int      // Port number for P2P communication
 	DHTProtocolID      string   // Protocol ID for the DHT used by this node
-	PrivateKey         string   // Node's private key for secure communication
+	PrivateKey         string   //nolint:gosec // G117: field name matches secret pattern - Node's private key for secure communication
 	SharedKey          string   // Shared key for private network communication
 	UsePrivateDHT      bool     // Whether to use a private DHT instead of the public IPFS DHT
 	OptimiseRetries    bool     // Whether to optimize connection retry behavior

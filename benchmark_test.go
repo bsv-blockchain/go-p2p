@@ -365,7 +365,7 @@ func BenchmarkP2PNode_PeerManagement(b *testing.B) {
 		// Generate unique peer IDs
 		peerID, _ := peer.Decode(fmt.Sprintf("12D3KooW%039d", i))
 		peerIDs[i] = peerID
-		node.UpdatePeerHeight(peerID, int32(i)) //nolint:gosec // used in tests
+		node.UpdatePeerHeight(peerID, int32(i))
 		node.peerConnTimes.Store(peerID, time.Now())
 	}
 
@@ -374,7 +374,7 @@ func BenchmarkP2PNode_PeerManagement(b *testing.B) {
 			i := 0
 			for pb.Next() {
 				peerID := peerIDs[i%numPeers]
-				node.UpdatePeerHeight(peerID, int32(i)) //nolint:gosec // used in tests
+				node.UpdatePeerHeight(peerID, int32(i))
 				i++
 			}
 		})
@@ -479,7 +479,7 @@ func BenchmarkP2PNode_MemoryAllocation(b *testing.B) {
 				peers = append(peers, PeerInfo{
 					ID:            peer.ID(fmt.Sprintf("peer%d", j)),
 					Addrs:         []multiaddr.Multiaddr{multiaddr.StringCast("/ip4/127.0.0.1/tcp/4001")},
-					CurrentHeight: int32(j), //nolint:gosec // used in tests
+					CurrentHeight: int32(j),
 					ConnTime:      &now,
 				})
 			}
