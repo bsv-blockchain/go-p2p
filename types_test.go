@@ -126,7 +126,7 @@ func TestP2PNode_AtomicOperations(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-	assert.Equal(t, uint64(goroutines*iterations), atomic.LoadUint64(&node.bytesSent)) //nolint:gosec // used in tests
+	assert.Equal(t, uint64(goroutines*iterations), atomic.LoadUint64(&node.bytesSent))
 
 	// Test bytesReceived increments
 	wg.Add(goroutines)
@@ -139,7 +139,7 @@ func TestP2PNode_AtomicOperations(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-	assert.Equal(t, uint64(goroutines*iterations*10), atomic.LoadUint64(&node.bytesReceived)) //nolint:gosec // used in tests
+	assert.Equal(t, uint64(goroutines*iterations*10), atomic.LoadUint64(&node.bytesReceived))
 
 	// Test timestamp updates
 	now := time.Now().Unix()
@@ -174,7 +174,7 @@ func TestP2PNode_ThreadSafeMaps(t *testing.T) {
 		go func(id string, height int32) {
 			defer wg.Done()
 			node.peerHeights.Store(id, height)
-		}(peerID, int32(i)) //nolint:gosec // used in tests
+		}(peerID, int32(i))
 
 		// Reader goroutine
 		go func(id string) {
