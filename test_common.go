@@ -43,7 +43,7 @@ func (m *MockLogger) Fatalf(format string, args ...interface{}) {
 
 // createTestContext creates a context with timeout for testing
 func createTestContext(timeout time.Duration) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), timeout)
+	return context.WithTimeout(context.Background(), timeout) //nolint:gosec // G118: cancel function is returned to caller
 }
 
 // createTestLogger creates a mock logger for testing
