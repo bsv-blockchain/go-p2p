@@ -141,7 +141,7 @@ func TestP2PNode_Publishing(t *testing.T) {
 	// Create two nodes
 	config1 := Config{
 		ProcessName:     "sender",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 	}
 
@@ -155,7 +155,7 @@ func TestP2PNode_Publishing(t *testing.T) {
 
 	config2 := Config{
 		ProcessName:     "receiver",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 	}
 
@@ -231,7 +231,7 @@ func TestP2PNode_InitGossipSub(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		ProcessName:     "gossipsub-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 	}
 
@@ -282,7 +282,7 @@ func TestSubscribeToTopics(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		ProcessName:     "subscribe-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 	}
 
@@ -323,7 +323,7 @@ func TestP2PNode_ConcurrentPublishing(t *testing.T) {
 
 	config := Config{
 		ProcessName:     "concurrent-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 	}
 
@@ -382,7 +382,7 @@ func TestP2PNode_HandlerContextCancellation(t *testing.T) {
 
 	config := Config{
 		ProcessName:     "handler-cancel-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 	}
 
@@ -433,7 +433,7 @@ func TestSubscribeToTopics_Error(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		ProcessName:     "error-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 	}
 

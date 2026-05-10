@@ -20,7 +20,7 @@ func TestP2PConfig_Validation(t *testing.T) {
 			name: "valid basic config",
 			config: Config{
 				ProcessName:     "test-node",
-				ListenAddresses: []string{"127.0.0.1"},
+				ListenAddresses: []string{testLocalhost},
 				Port:            4001,
 			},
 			validate: func(t *testing.T, config Config) {
@@ -67,7 +67,7 @@ func TestP2PConfig_Validation(t *testing.T) {
 			name: "config with static peers",
 			config: Config{
 				ProcessName:     "connected-node",
-				ListenAddresses: []string{"127.0.0.1"},
+				ListenAddresses: []string{testLocalhost},
 				Port:            4001,
 				StaticPeers: []string{
 					"/ip4/192.168.1.10/tcp/4001/p2p/12D3KooWTest1",
