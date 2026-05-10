@@ -26,8 +26,8 @@ func BenchmarkP2PNode_Publish(b *testing.B) {
 	ctx := context.Background()
 	config := Config{
 		ProcessName:        "bench-publish",
-		ListenAddresses:    []string{"127.0.0.1"},
-		AdvertiseAddresses: []string{"127.0.0.1"},
+		ListenAddresses:    []string{testLocalhost},
+		AdvertiseAddresses: []string{testLocalhost},
 		Port:               3111,
 	}
 
@@ -74,8 +74,8 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 	// Create two nodes
 	config1 := Config{
 		ProcessName:        "bench-sender",
-		ListenAddresses:    []string{"127.0.0.1"},
-		AdvertiseAddresses: []string{"127.0.0.1"},
+		ListenAddresses:    []string{testLocalhost},
+		AdvertiseAddresses: []string{testLocalhost},
 		Port:               3111,
 	}
 
@@ -85,8 +85,8 @@ func BenchmarkP2PNode_SendToPeer(b *testing.B) {
 
 	config2 := Config{
 		ProcessName:        "bench-receiver",
-		ListenAddresses:    []string{"127.0.0.1"},
-		AdvertiseAddresses: []string{"127.0.0.1"},
+		ListenAddresses:    []string{testLocalhost},
+		AdvertiseAddresses: []string{testLocalhost},
 		Port:               3112,
 	}
 
@@ -153,8 +153,8 @@ func BenchmarkP2PNode_ConcurrentConnections(b *testing.B) {
 	// Create a central node
 	centralConfig := Config{
 		ProcessName:        "central",
-		ListenAddresses:    []string{"127.0.0.1"},
-		AdvertiseAddresses: []string{"127.0.0.1"},
+		ListenAddresses:    []string{testLocalhost},
+		AdvertiseAddresses: []string{testLocalhost},
 		Port:               3111,
 	}
 
@@ -190,7 +190,7 @@ func BenchmarkP2PNode_ConcurrentConnections(b *testing.B) {
 
 						config := Config{
 							ProcessName:     fmt.Sprintf("node%d-%d", i, idx),
-							ListenAddresses: []string{"127.0.0.1"},
+							ListenAddresses: []string{testLocalhost},
 							Port:            3112 + idx,
 							StaticPeers:     []string{centralAddr},
 						}
@@ -240,8 +240,8 @@ func BenchmarkP2PNode_MessageRouting(b *testing.B) {
 	for i := 0; i < numNodes; i++ {
 		config := Config{
 			ProcessName:        fmt.Sprintf("router%d", i),
-			ListenAddresses:    []string{"127.0.0.1"},
-			AdvertiseAddresses: []string{"127.0.0.1"},
+			ListenAddresses:    []string{testLocalhost},
+			AdvertiseAddresses: []string{testLocalhost},
 			Port:               3111 + i,
 		}
 
@@ -344,8 +344,8 @@ func BenchmarkP2PNode_PeerManagement(b *testing.B) {
 	ctx := context.Background()
 	config := Config{
 		ProcessName:        "bench-peer-mgmt",
-		ListenAddresses:    []string{"127.0.0.1"},
-		AdvertiseAddresses: []string{"127.0.0.1"},
+		ListenAddresses:    []string{testLocalhost},
+		AdvertiseAddresses: []string{testLocalhost},
 		Port:               3111,
 	}
 
@@ -456,8 +456,8 @@ func BenchmarkP2PNode_MemoryAllocation(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			config := Config{
 				ProcessName:        fmt.Sprintf("mem-test-%d", i),
-				ListenAddresses:    []string{"127.0.0.1"},
-				AdvertiseAddresses: []string{"127.0.0.1"},
+				ListenAddresses:    []string{testLocalhost},
+				AdvertiseAddresses: []string{testLocalhost},
 				Port:               3111 + i,
 			}
 

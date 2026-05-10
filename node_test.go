@@ -29,7 +29,7 @@ func TestNewP2PNode(t *testing.T) {
 			name: "basic node creation",
 			config: Config{
 				ProcessName:     "test-node",
-				ListenAddresses: []string{"127.0.0.1"},
+				ListenAddresses: []string{testLocalhost},
 				Port:            0, // Use 0 for random port
 			},
 			wantErr: false,
@@ -43,7 +43,7 @@ func TestNewP2PNode(t *testing.T) {
 			name: "node with private key",
 			config: Config{
 				ProcessName:     "key-node",
-				ListenAddresses: []string{"127.0.0.1"},
+				ListenAddresses: []string{testLocalhost},
 				Port:            0,
 				PrivateKey:      generateValidHexKey(t),
 			},
@@ -59,7 +59,7 @@ func TestNewP2PNode(t *testing.T) {
 			name: "node with invalid private key",
 			config: Config{
 				ProcessName:     "bad-key-node",
-				ListenAddresses: []string{"127.0.0.1"},
+				ListenAddresses: []string{testLocalhost},
 				Port:            0,
 				PrivateKey:      "invalid-hex-key",
 			},
@@ -84,7 +84,7 @@ func TestNewP2PNode(t *testing.T) {
 			name: "private network node",
 			config: Config{
 				ProcessName:     "private-node",
-				ListenAddresses: []string{"127.0.0.1"},
+				ListenAddresses: []string{testLocalhost},
 				Port:            0,
 				UsePrivateDHT:   true,
 				SharedKey:       "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
@@ -99,7 +99,7 @@ func TestNewP2PNode(t *testing.T) {
 			name: "private network with invalid shared key",
 			config: Config{
 				ProcessName:     "bad-private-node",
-				ListenAddresses: []string{"127.0.0.1"},
+				ListenAddresses: []string{testLocalhost},
 				Port:            0,
 				UsePrivateDHT:   true,
 				SharedKey:       "invalid-key",
@@ -111,7 +111,7 @@ func TestNewP2PNode(t *testing.T) {
 			name: "node with NAT service enabled",
 			config: Config{
 				ProcessName:      "nat-service-node",
-				ListenAddresses:  []string{"127.0.0.1"},
+				ListenAddresses:  []string{testLocalhost},
 				Port:             0,
 				EnableNATService: true,
 			},
@@ -125,7 +125,7 @@ func TestNewP2PNode(t *testing.T) {
 			name: "node with hole punching enabled",
 			config: Config{
 				ProcessName:        "hole-punch-node",
-				ListenAddresses:    []string{"127.0.0.1"},
+				ListenAddresses:    []string{testLocalhost},
 				Port:               0,
 				EnableHolePunching: true,
 			},
@@ -139,7 +139,7 @@ func TestNewP2PNode(t *testing.T) {
 			name: "node with relay enabled",
 			config: Config{
 				ProcessName:     "relay-node",
-				ListenAddresses: []string{"127.0.0.1"},
+				ListenAddresses: []string{testLocalhost},
 				Port:            0,
 				EnableRelay:     true,
 			},
@@ -153,7 +153,7 @@ func TestNewP2PNode(t *testing.T) {
 			name: "node with NAT port mapping enabled",
 			config: Config{
 				ProcessName:      "nat-portmap-node",
-				ListenAddresses:  []string{"127.0.0.1"},
+				ListenAddresses:  []string{testLocalhost},
 				Port:             0,
 				EnableNATPortMap: true,
 			},
@@ -167,7 +167,7 @@ func TestNewP2PNode(t *testing.T) {
 			name: "node with all NAT/relay options enabled",
 			config: Config{
 				ProcessName:        "full-nat-node",
-				ListenAddresses:    []string{"127.0.0.1"},
+				ListenAddresses:    []string{testLocalhost},
 				Port:               0,
 				EnableNATService:   true,
 				EnableHolePunching: true,
@@ -187,7 +187,7 @@ func TestNewP2PNode(t *testing.T) {
 			name: "private network with NAT/relay options",
 			config: Config{
 				ProcessName:        "private-nat-node",
-				ListenAddresses:    []string{"127.0.0.1"},
+				ListenAddresses:    []string{testLocalhost},
 				Port:               0,
 				UsePrivateDHT:      true,
 				SharedKey:          "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
@@ -253,7 +253,7 @@ func TestP2PNode_StartStop(t *testing.T) {
 
 		config := Config{
 			ProcessName:     "start-stop-test",
-			ListenAddresses: []string{"127.0.0.1"},
+			ListenAddresses: []string{testLocalhost},
 			Port:            0,
 		}
 
@@ -281,7 +281,7 @@ func TestP2PNode_StartStop(t *testing.T) {
 
 		config := Config{
 			ProcessName:     "stream-handler-test",
-			ListenAddresses: []string{"127.0.0.1"},
+			ListenAddresses: []string{testLocalhost},
 			Port:            0,
 		}
 
@@ -310,7 +310,7 @@ func TestP2PNode_StartStop(t *testing.T) {
 
 		config := Config{
 			ProcessName:     "multi-topic-test",
-			ListenAddresses: []string{"127.0.0.1"},
+			ListenAddresses: []string{testLocalhost},
 			Port:            0,
 		}
 
@@ -339,7 +339,7 @@ func TestP2PNode_BasicGetters(t *testing.T) {
 
 	config := Config{
 		ProcessName:     "getter-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 	}
 
@@ -383,7 +383,7 @@ func TestP2PNode_Metrics(t *testing.T) {
 
 	config := Config{
 		ProcessName:     "metrics-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 	}
 
@@ -406,7 +406,7 @@ func TestP2PNode_PeerManagement(t *testing.T) {
 
 	config := Config{
 		ProcessName:     "peer-mgmt-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 	}
 
@@ -469,7 +469,7 @@ func TestP2PNode_Callbacks(t *testing.T) {
 
 	config := Config{
 		ProcessName:     "callback-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 	}
 
@@ -520,7 +520,7 @@ func TestP2PNode_ThreadSafety(t *testing.T) {
 
 	config := Config{
 		ProcessName:     "thread-safety-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 	}
 
@@ -564,15 +564,15 @@ func TestP2PNode_ConnectToPeer(t *testing.T) {
 	// Create two nodes for testing connections
 	config1 := Config{
 		ProcessName:        "node1",
-		ListenAddresses:    []string{"127.0.0.1"},
-		AdvertiseAddresses: []string{"127.0.0.1"},
+		ListenAddresses:    []string{testLocalhost},
+		AdvertiseAddresses: []string{testLocalhost},
 		Port:               3111, // Random port
 	}
 
 	config2 := Config{
 		ProcessName:        "node2",
-		ListenAddresses:    []string{"127.0.0.1"},
-		AdvertiseAddresses: []string{"127.0.0.1"},
+		ListenAddresses:    []string{testLocalhost},
+		AdvertiseAddresses: []string{testLocalhost},
 		Port:               3112, // Random port
 	}
 
@@ -653,7 +653,7 @@ func TestP2PNode_ConnectToPeer(t *testing.T) {
 		// Create a new node for this test
 		config3 := Config{
 			ProcessName:     "node3",
-			ListenAddresses: []string{"127.0.0.1"},
+			ListenAddresses: []string{testLocalhost},
 			Port:            0,
 		}
 		node3, err := NewNode(ctx, logger, config3)

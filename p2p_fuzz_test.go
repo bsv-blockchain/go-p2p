@@ -302,7 +302,7 @@ func parsePrivateKeyFromHex(hexStr string) ([]byte, error) {
 // FuzzNodeCreation tests node creation with fuzzed configuration
 // to ensure NewNode handles edge cases gracefully.
 func FuzzNodeCreation(f *testing.F) {
-	f.Add("test-node", 9000, "127.0.0.1", "/ip4/127.0.0.1/tcp/9000")
+	f.Add("test-node", 9000, testLocalhost, "/ip4/127.0.0.1/tcp/9000")
 	f.Add("", 0, "", "")
 	f.Add("node", 65535, "255.255.255.255", "/ip4/255.255.255.255/tcp/65535")
 

@@ -161,7 +161,7 @@ func TestP2PNode_ShouldSkipBasedOnErrors(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		ProcessName:     "error-skip-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 		OptimiseRetries: true,
 	}
@@ -240,7 +240,7 @@ func TestP2PNode_ShouldSkipBasedOnErrors_LegacyAndErrorTypes(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		ProcessName:     "error-skip-legacy-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 		OptimiseRetries: true,
 	}
@@ -300,7 +300,7 @@ func TestP2PNode_ShouldSkipNoGoodAddresses(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		ProcessName:     "no-good-addr-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            0,
 	}
 
@@ -373,8 +373,8 @@ func TestP2PNode_AttemptConnection(t *testing.T) {
 	// Create two nodes
 	config1 := Config{
 		ProcessName:        "node1",
-		ListenAddresses:    []string{"127.0.0.1"},
-		AdvertiseAddresses: []string{"127.0.0.1"},
+		ListenAddresses:    []string{testLocalhost},
+		AdvertiseAddresses: []string{testLocalhost},
 		Port:               3111,
 	}
 
@@ -384,7 +384,7 @@ func TestP2PNode_AttemptConnection(t *testing.T) {
 
 	config2 := Config{
 		ProcessName:        "node2",
-		ListenAddresses:    []string{"127.0.0.1"},
+		ListenAddresses:    []string{testLocalhost},
 		AdvertiseAddresses: []string{"127.0.1"},
 		Port:               3112,
 	}
@@ -464,7 +464,7 @@ func TestP2PNode_PrivateNetwork(t *testing.T) {
 	t.Run("setUpPrivateNetwork success", func(t *testing.T) {
 		config := Config{
 			ProcessName:     "private-test",
-			ListenAddresses: []string{"127.0.0.1"},
+			ListenAddresses: []string{testLocalhost},
 			Port:            4001,
 			SharedKey:       "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 		}
@@ -511,7 +511,7 @@ func TestP2PNode_PrivateNetwork(t *testing.T) {
 	t.Run("setUpPrivateNetwork invalid shared key", func(t *testing.T) {
 		config := Config{
 			ProcessName:     "bad-private-test",
-			ListenAddresses: []string{"127.0.0.1"},
+			ListenAddresses: []string{testLocalhost},
 			Port:            4003,
 			SharedKey:       "invalid-key",
 		}
@@ -533,7 +533,7 @@ func TestP2PNode_InitDHT(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		ProcessName:     "dht-test",
-		ListenAddresses: []string{"127.0.0.1"},
+		ListenAddresses: []string{testLocalhost},
 		Port:            3111,
 	}
 
@@ -568,7 +568,7 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 	t.Run("no bootstrap addresses", func(t *testing.T) {
 		config := Config{
 			ProcessName:        "private-dht-test",
-			ListenAddresses:    []string{"127.0.0.1"},
+			ListenAddresses:    []string{testLocalhost},
 			Port:               3111,
 			BootstrapAddresses: []string{},
 			DHTProtocolID:      "/test/dht/1.0.0",
@@ -591,7 +591,7 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 	t.Run("invalid bootstrap addresses", func(t *testing.T) {
 		config := Config{
 			ProcessName:        "private-dht-test2",
-			ListenAddresses:    []string{"127.0.0.1"},
+			ListenAddresses:    []string{testLocalhost},
 			Port:               0,
 			BootstrapAddresses: []string{"invalid-address"},
 			DHTProtocolID:      "/test/dht/1.0.0",
@@ -614,7 +614,7 @@ func TestP2PNode_InitPrivateDHT(t *testing.T) {
 	t.Run("missing DHT protocol ID", func(t *testing.T) {
 		config := Config{
 			ProcessName:        "private-dht-test3",
-			ListenAddresses:    []string{"127.0.0.1"},
+			ListenAddresses:    []string{testLocalhost},
 			Port:               0,
 			BootstrapAddresses: []string{"/ip4/1.2.3.4/tcp/4001/p2p/12D3KooWTest"},
 			DHTProtocolID:      "",
