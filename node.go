@@ -1101,7 +1101,7 @@ func (s *Node) initDHT(ctx context.Context, h host.Host) (*dht.IpfsDHT, error) {
 
 	options = append(options, dht.Mode(dht.ModeAutoServer))
 
-	kademliaDHT, err := dht.New(ctx, h, options...)
+	kademliaDHT, err := dht.New(h, options...)
 	if err != nil {
 		return nil, fmt.Errorf(errorCreatingDhtMessage, err)
 	} else if err = kademliaDHT.Bootstrap(ctx); err != nil {
@@ -1245,7 +1245,7 @@ func (s *Node) initPrivateDHT(ctx context.Context, host host.Host) (*dht.IpfsDHT
 	options = append(options, dht.ProtocolPrefix(dhtProtocolID))
 	options = append(options, dht.Mode(dht.ModeAuto))
 
-	kademliaDHT, err := dht.New(ctx, host, options...)
+	kademliaDHT, err := dht.New(host, options...)
 	if err != nil {
 		return nil, fmt.Errorf(errorCreatingDhtMessage, err)
 	}
