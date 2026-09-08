@@ -1,6 +1,6 @@
 module github.com/bsv-blockchain/go-p2p
 
-go 1.25.7
+go 1.26.0
 
 require (
 	github.com/libp2p/go-libp2p v0.49.0
@@ -9,7 +9,7 @@ require (
 	github.com/multiformats/go-multiaddr v0.16.1
 	github.com/sirupsen/logrus v1.10.2
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/sync v0.22.0
+	golang.org/x/sync v0.23.0
 )
 
 require (
